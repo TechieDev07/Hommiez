@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ShoppingBag, PlusCircle, MessageCircle, MapPin, X, Loader2, Trash2 } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 
 const REGIONS = [
   'Akurdi (Near Rly Stn)',
@@ -23,6 +24,8 @@ export default function MarketplacePage() {
   const [category, setCategory] = useState('');
   const [negotiableFilter, setNegotiableFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Form State
   const [newItem, setNewItem] = useState({
@@ -135,14 +138,18 @@ export default function MarketplacePage() {
     }
   };
 
-  const handleDelete = async (itemId) => {
-    if (!window.confirm('Are you sure you want to delete this listing?')) return;
+  const confirmDelete = async () => {
+    if (!deleteTargetId) return;
+    setDeleting(true);
     try {
-      await axiosClient.delete(`/marketplace/${itemId}`);
-      setItems((prev) => prev.filter((i) => i._id !== itemId));
+      await axiosClient.delete(`/marketplace/${deleteTargetId}`);
+      setItems((prev) => prev.filter((i) => i._id !== deleteTargetId));
+      setDeleteTargetId(null);
     } catch (err) {
       console.error('Failed to delete item:', err);
       alert(err?.response?.data?.message || 'Could not delete item.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -235,9 +242,9 @@ export default function MarketplacePage() {
                     >
                       <MessageCircle size={15} /> WhatsApp
                     </a>
-                    {user && item.seller && String(user.id) === String(item.seller) && (
+                    {user && item.seller && String(user?.id || user?._id) === String(item?.seller?._id || item?.seller) && (
                       <button
-                        onClick={() => handleDelete(item._id)}
+                        onClick={() => setDeleteTargetId(item._id)}
                         title="Delete your listing"
                         style={{
                           background: 'none',
@@ -369,6 +376,19 @@ export default function MarketplacePage() {
           </div>
         </div>
       )}
+
+      {/* Custom Confirmation Modal for Deletion */}
+      <ConfirmDialog
+        isOpen={Boolean(deleteTargetId)}
+        title="Delete Listing?"
+        message="Are you sure you want to delete this item? It will be permanently removed from the marketplace."
+        confirmText="Delete Listing"
+        cancelText="Cancel"
+        destructive={true}
+        loading={deleting}
+        onCancel={() => !deleting && setDeleteTargetId(null)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

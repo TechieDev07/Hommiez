@@ -5,6 +5,7 @@ import {
   CheckCircle2, GraduationCap, RotateCcw, X, MapPin, Loader2, Trash2,
 } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 
 const REGIONS = [
   'Akurdi (Near Rly Stn)',
@@ -25,6 +26,8 @@ export default function FlatmatesPage() {
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({ gender: '', maxBudget: '', region: '' });
   const [showModal, setShowModal] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [newPost, setNewPost] = useState({
     name: '', college: '', gender: 'boys_only',
     budget: '', region: '', customRegion: '', habits: '', bio: '', phone: '',
@@ -96,14 +99,18 @@ export default function FlatmatesPage() {
     }
   };
 
-  const handleDelete = async (postId) => {
-    if (!window.confirm('Are you sure you want to delete this post?')) return;
+  const confirmDelete = async () => {
+    if (!deleteTargetId) return;
+    setDeleting(true);
     try {
-      await axiosClient.delete(`/flatmates/${postId}`);
-      setPosts((prev) => prev.filter((p) => p._id !== postId));
+      await axiosClient.delete(`/flatmates/${deleteTargetId}`);
+      setPosts((prev) => prev.filter((p) => p._id !== deleteTargetId));
+      setDeleteTargetId(null);
     } catch (err) {
       console.error('Failed to delete post:', err);
       alert(err?.response?.data?.message || 'Could not delete post.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -252,9 +259,9 @@ export default function FlatmatesPage() {
                 >
                   <MessageCircle size={15} /> Chat on WhatsApp
                 </a>
-                {user && post.poster && String(user.id) === String(post.poster) && (
+                {user && post.poster && String(user?.id || user?._id) === String(post.poster?._id || post.poster) && (
                   <button
-                    onClick={() => handleDelete(post._id)}
+                    onClick={() => setDeleteTargetId(post._id)}
                     title="Delete your post"
                     style={{
                       background: 'none',
@@ -371,6 +378,19 @@ export default function FlatmatesPage() {
           </div>
         </div>
       )}
+
+      {/* Custom Confirmation Modal for Deletion */}
+      <ConfirmDialog
+        isOpen={Boolean(deleteTargetId)}
+        title="Delete Flatmate Post?"
+        message="Are you sure you want to delete this post? It will be permanently removed from the listings."
+        confirmText="Delete Post"
+        cancelText="Cancel"
+        destructive={true}
+        loading={deleting}
+        onCancel={() => !deleting && setDeleteTargetId(null)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

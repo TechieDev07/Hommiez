@@ -65,7 +65,9 @@ export default function App() {
             color: 'var(--text-muted)',
           }}>
             <div className="container">
-              Hommiez © {new Date().getFullYear()} — Student Housing, Flatmate Finder & Campus Marketplace. Built with MERN Stack.
+              <p>Hommiez © {new Date().getFullYear()} </p>
+               <p>Find your space. Find your people.</p>
+               <p>Built by Student, for the Students</p>
             </div>
           </footer>
         </div>
