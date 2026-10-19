@@ -198,10 +198,10 @@ export default function RegisterPage() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Business or Property Name</label>
+                <label className="form-label">Business or Agency Name (Optional)</label>
                 <input
                   type="text"
-                  placeholder="e.g. Sai PG & Hostels or Direct Owner"
+                  placeholder="e.g. Prime Realty (leave blank if direct owner)"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
                   className="form-control"

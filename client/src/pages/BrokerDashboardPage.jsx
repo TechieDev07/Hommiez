@@ -9,6 +9,8 @@ import {
   Image as ImageIcon,
   X,
   UploadCloud,
+  CheckCircle2,
+  RotateCcw,
 } from 'lucide-react';
 
 export default function BrokerDashboardPage() {
@@ -17,6 +19,7 @@ export default function BrokerDashboardPage() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -84,6 +87,7 @@ export default function BrokerDashboardPage() {
   };
 
   const handleToggleStatus = async (id, currentStatus) => {
+    setUpdatingStatusId(id);
     try {
       const newStatus = currentStatus === 'available' ? 'rented' : 'available';
       await axiosClient.patch(`/listings/${id}/status`, { status: newStatus });
@@ -96,6 +100,8 @@ export default function BrokerDashboardPage() {
           l._id === id ? { ...l, status: l.status === 'available' ? 'rented' : 'available' } : l
         )
       );
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
@@ -166,10 +172,24 @@ export default function BrokerDashboardPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: '800' }}>
-            {user?.businessName || user?.name}'s Dashboard
+          <h1 style={{ fontSize: '1.75rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+            <span>{user?.name ? `${user.name}'s Dashboard` : 'Owner Dashboard'}</span>
+            <span
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: '600',
+                padding: '0.2rem 0.65rem',
+                borderRadius: '9999px',
+                backgroundColor: 'var(--primary-light)',
+                color: 'var(--primary)',
+                border: '1px solid var(--primary-border)',
+                letterSpacing: '0.2px',
+              }}
+            >
+              Verified Owner
+            </span>
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
             Manage your flats/PGs and view incoming student inquiries
           </p>
         </div>
@@ -282,11 +302,83 @@ export default function BrokerDashboardPage() {
                 <div>
                   <button
                     onClick={() => handleToggleStatus(item._id, item.status)}
-                    className="btn-outline"
-                    style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+                    disabled={updatingStatusId === item._id}
+                    title={
+                      item.status === 'available'
+                        ? 'Click to mark this property as rented out'
+                        : 'Click to reactivate this property listing'
+                    }
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '10px',
+                      fontSize: '0.825rem',
+                      fontWeight: '600',
+                      cursor: updatingStatusId === item._id ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      backgroundColor: item.status === 'available' ? '#FFFFFF' : '#F0FDF4',
+                      color: item.status === 'available' ? '#334155' : '#15803D',
+                      border: item.status === 'available' ? '1.5px solid #CBD5E1' : '1.5px solid #86EFAC',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (updatingStatusId === item._id) return;
+                      if (item.status === 'available') {
+                        e.currentTarget.style.backgroundColor = '#FEF2F2';
+                        e.currentTarget.style.borderColor = '#FECACA';
+                        e.currentTarget.style.color = '#DC2626';
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                        e.currentTarget.style.boxShadow = '0 4px 10px rgba(220, 38, 38, 0.12)';
+                      } else {
+                        e.currentTarget.style.backgroundColor = '#DCFCE7';
+                        e.currentTarget.style.borderColor = '#4ADE80';
+                        e.currentTarget.style.color = '#166534';
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                        e.currentTarget.style.boxShadow = '0 4px 10px rgba(22, 163, 74, 0.15)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (item.status === 'available') {
+                        e.currentTarget.style.backgroundColor = '#FFFFFF';
+                        e.currentTarget.style.borderColor = '#CBD5E1';
+                        e.currentTarget.style.color = '#334155';
+                      } else {
+                        e.currentTarget.style.backgroundColor = '#F0FDF4';
+                        e.currentTarget.style.borderColor = '#86EFAC';
+                        e.currentTarget.style.color = '#15803D';
+                      }
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+                    }}
                   >
-                    <RefreshCw size={13} />
-                    Mark as {item.status === 'available' ? 'Rented' : 'Available'}
+                    {updatingStatusId === item._id ? (
+                      <>
+                        <RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} />
+                        <span>Updating...</span>
+                      </>
+                    ) : item.status === 'available' ? (
+                      <>
+                        <span
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: '#10B981',
+                            display: 'inline-block',
+                            boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.25)',
+                          }}
+                        />
+                        <CheckCircle2 size={14} color="#0F766E" />
+                        <span>Mark as Rented</span>
+                      </>
+                    ) : (
+                      <>
+                        <RotateCcw size={14} color="#16A34A" />
+                        <span>Relist (Mark Available)</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>

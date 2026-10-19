@@ -26,3 +26,5 @@ Thumbs.db
 # Production build
 dist/
 build/
+*.timestamp-*.mjs
+
