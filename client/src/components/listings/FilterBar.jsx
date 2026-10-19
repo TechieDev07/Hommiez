@@ -107,6 +107,21 @@ export default function FilterBar({ filters, setFilters, onReset }) {
             <option value="girls_only">Girls Only</option>
           </select>
         </div>
+
+        {/* Brokerage Transparency */}
+        <div>
+          <label className="form-label">Brokerage</label>
+          <select
+            name="brokerage"
+            value={filters.brokerage || ''}
+            onChange={handleChange}
+            className="form-control"
+          >
+            <option value="">All Listings</option>
+            <option value="zero">Zero Brokerage Only</option>
+            <option value="broker">Broker Listed</option>
+          </select>
+        </div>
       </div>
     </div>
   );

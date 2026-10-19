@@ -13,6 +13,7 @@ export const getListings = async (req, res, next) => {
       maxRent,
       maxDistance,
       gender,
+      brokerage,
       page = 1,
       limit = 12,
     } = req.query;
@@ -28,6 +29,18 @@ export const getListings = async (req, res, next) => {
     if (maxDistance) query.distanceFromCampusKm = { $lte: Number(maxDistance) };
     if (gender && gender !== 'any') {
       query['preferences.gender'] = { $in: [gender, 'any'] };
+    }
+    if (brokerage === 'zero') {
+      query.$or = [
+        { hasBrokerage: false, brokerageFee: { $lte: 0 } },
+        { hasBrokerage: false },
+        { hasBrokerage: { $exists: false }, brokerageFee: 0 },
+      ];
+    } else if (brokerage === 'broker') {
+      query.$or = [
+        { hasBrokerage: true },
+        { brokerageFee: { $gt: 0 } },
+      ];
     }
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -97,6 +110,7 @@ export const createListing = async (req, res, next) => {
       type,
       rent,
       deposit,
+      hasBrokerage,
       brokerageFee,
       locationName,
       distanceFromCampusKm,
@@ -105,13 +119,8 @@ export const createListing = async (req, res, next) => {
       photos,
     } = req.body;
 
-    // Upfront brokerage fee must be specified (can be 0)
-    if (brokerageFee === undefined || brokerageFee === null) {
-      return res.status(400).json({
-        success: false,
-        message: 'Upfront brokerage fee must be stated (use 0 for zero-brokerage).',
-      });
-    }
+    const isBrokerageCharged = hasBrokerage === true || hasBrokerage === 'true' || Number(brokerageFee) > 0;
+    const finalBrokerageFee = isBrokerageCharged ? (Number(brokerageFee) || 0) : 0;
 
     const listing = await Listing.create({
       broker: req.user._id,
@@ -120,7 +129,8 @@ export const createListing = async (req, res, next) => {
       type,
       rent,
       deposit,
-      brokerageFee,
+      hasBrokerage: isBrokerageCharged,
+      brokerageFee: finalBrokerageFee,
       locationName,
       distanceFromCampusKm,
       preferences,

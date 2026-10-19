@@ -33,9 +33,12 @@ const listingSchema = new mongoose.Schema(
       required: [true, 'Please provide the security deposit amount'],
       min: 0,
     },
+    hasBrokerage: {
+      type: Boolean,
+      default: false,
+    },
     brokerageFee: {
       type: Number,
-      required: [true, 'Please declare the upfront brokerage fee (use 0 for zero-brokerage)'],
       min: 0,
       default: 0,
     },

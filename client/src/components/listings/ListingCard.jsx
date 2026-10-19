@@ -9,7 +9,8 @@ export default function ListingCard({ listing }) {
       ? listing.photos[0].url
       : 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80';
 
-  const isFreeBrokerage = Number(listing.brokerageFee) === 0;
+  const hasBrokerage = listing.hasBrokerage === true || Number(listing.brokerageFee) > 0;
+  const feeAmount = Number(listing.brokerageFee) || 0;
 
   return (
     <div className="card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -31,13 +32,21 @@ export default function ListingCard({ listing }) {
 
         {/* Upfront Brokerage Badge */}
         <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
-          {isFreeBrokerage ? (
+          {!hasBrokerage ? (
             <span className="badge badge-free-brokerage">
-              <Zap size={12} /> 0 Brokerage
+              <Zap size={12} /> Zero Brokerage
             </span>
           ) : (
-            <span className="badge" style={{ backgroundColor: '#FFFFFF', color: 'var(--text-main)' }}>
-              Fee: ₹{listing.brokerageFee.toLocaleString()}
+            <span
+              className="badge"
+              style={{
+                backgroundColor: '#FEF3C7',
+                color: '#92400E',
+                border: '1px solid #FDE68A',
+                fontWeight: '600',
+              }}
+            >
+              {feeAmount > 0 ? `Brokerage: ₹${feeAmount.toLocaleString()}` : 'Brokerage Applicable'}
             </span>
           )}
         </div>

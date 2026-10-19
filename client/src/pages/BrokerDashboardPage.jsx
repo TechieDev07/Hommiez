@@ -11,6 +11,8 @@ import {
   UploadCloud,
   CheckCircle2,
   RotateCcw,
+  Zap,
+  ShieldCheck,
 } from 'lucide-react';
 
 export default function BrokerDashboardPage() {
@@ -27,7 +29,8 @@ export default function BrokerDashboardPage() {
     type: 'pg',
     rent: '',
     deposit: '',
-    brokerageFee: '0',
+    hasBrokerage: false,
+    brokerageFee: '',
     locationName: '',
     distanceFromCampusKm: '',
     description: '',
@@ -132,7 +135,8 @@ export default function BrokerDashboardPage() {
         type: formData.type,
         rent: Number(formData.rent),
         deposit: Number(formData.deposit),
-        brokerageFee: Number(formData.brokerageFee),
+        hasBrokerage: formData.hasBrokerage,
+        brokerageFee: formData.hasBrokerage ? (Number(formData.brokerageFee) || 0) : 0,
         locationName: formData.locationName,
         distanceFromCampusKm: Number(formData.distanceFromCampusKm),
         description: formData.description,
@@ -150,7 +154,8 @@ export default function BrokerDashboardPage() {
         type: 'pg',
         rent: '',
         deposit: '',
-        brokerageFee: '0',
+        hasBrokerage: false,
+        brokerageFee: '',
         locationName: '',
         distanceFromCampusKm: '',
         description: '',
@@ -586,19 +591,70 @@ export default function BrokerDashboardPage() {
                     className="form-control"
                   />
                 </div>
+              </div>
 
-                <div className="form-group">
-                  <label className="form-label">Brokerage Fee (₹)</label>
-                  <input
-                    type="number"
-                    required
-                    placeholder="0"
-                    value={formData.brokerageFee}
-                    onChange={(e) => setFormData({ ...formData, brokerageFee: e.target.value })}
-                    className="form-control"
-                  />
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>0 for Direct Owner</span>
+              {/* Brokerage Transparency Selector */}
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label className="form-label" style={{ marginBottom: '0.4rem', fontWeight: '700' }}>
+                  Brokerage Policy
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div
+                    onClick={() => setFormData({ ...formData, hasBrokerage: false, brokerageFee: '' })}
+                    style={{
+                      padding: '0.85rem 1rem',
+                      borderRadius: '10px',
+                      border: !formData.hasBrokerage ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+                      backgroundColor: !formData.hasBrokerage ? 'var(--primary-light)' : '#FFFFFF',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: '700', fontSize: '0.9rem', color: !formData.hasBrokerage ? 'var(--primary)' : 'var(--text-main)' }}>
+                      <Zap size={16} />
+                      <span>Zero Brokerage</span>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                      Direct Owner • 100% Free for students
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => setFormData({ ...formData, hasBrokerage: true })}
+                    style={{
+                      padding: '0.85rem 1rem',
+                      borderRadius: '10px',
+                      border: formData.hasBrokerage ? '2px solid #D97706' : '1px solid var(--border-color)',
+                      backgroundColor: formData.hasBrokerage ? '#FFFBEB' : '#FFFFFF',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: '700', fontSize: '0.9rem', color: formData.hasBrokerage ? '#B45309' : 'var(--text-main)' }}>
+                      <Users size={16} />
+                      <span>Brokerage Charged</span>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                      Listed by Broker / Agent
+                    </div>
+                  </div>
                 </div>
+
+                {formData.hasBrokerage && (
+                  <div style={{ marginTop: '0.75rem', backgroundColor: '#F8FAFC', padding: '0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-main)', display: 'block', marginBottom: '0.35rem' }}>
+                      Brokerage Amount (₹) — <span style={{ fontWeight: 'normal', color: 'var(--text-muted)' }}>Optional (leave blank if percentage or negotiable)</span>
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 1500 (optional)"
+                      value={formData.brokerageFee}
+                      onChange={(e) => setFormData({ ...formData, brokerageFee: e.target.value })}
+                      className="form-control"
+                      style={{ backgroundColor: '#FFFFFF' }}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="form-grid-2">

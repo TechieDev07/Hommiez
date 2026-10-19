@@ -81,7 +81,8 @@ export default function ListingDetailPage() {
     return <div className="container" style={{ padding: '4rem 1rem', textAlign: 'center' }}>Listing not found.</div>;
   }
 
-  const isFreeBrokerage = Number(listing.brokerageFee) === 0;
+  const hasBrokerage = listing.hasBrokerage === true || Number(listing.brokerageFee) > 0;
+  const feeAmount = Number(listing.brokerageFee) || 0;
 
   return (
     <div className="container" style={{ padding: '1.5rem 1rem 5rem' }}>
@@ -109,13 +110,21 @@ export default function ListingDetailPage() {
           <span className={`badge ${listing.type === 'pg' ? 'badge-pg' : 'badge-flat'}`}>
             {listing.type === 'pg' ? 'PG' : 'Flat'}
           </span>
-          {isFreeBrokerage ? (
+          {!hasBrokerage ? (
             <span className="badge badge-free-brokerage">
               <Zap size={12} /> Zero Brokerage
             </span>
           ) : (
-            <span className="badge" style={{ backgroundColor: '#FFFFFF', color: 'var(--text-main)' }}>
-              Fee: ₹{listing.brokerageFee?.toLocaleString()}
+            <span
+              className="badge"
+              style={{
+                backgroundColor: '#FEF3C7',
+                color: '#92400E',
+                border: '1px solid #FDE68A',
+                fontWeight: '600',
+              }}
+            >
+              {feeAmount > 0 ? `Brokerage: ₹${feeAmount.toLocaleString()}` : 'Brokerage Applicable'}
             </span>
           )}
         </div>
@@ -181,8 +190,12 @@ export default function ListingDetailPage() {
               Deposit: <strong style={{ color: 'var(--text-main)' }}>₹{listing.deposit?.toLocaleString() || 0}</strong>
             </div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-              Upfront Brokerage: <strong style={{ color: isFreeBrokerage ? '#166534' : 'var(--text-main)' }}>
-                {isFreeBrokerage ? '₹0 (Direct Owner)' : `₹${listing.brokerageFee?.toLocaleString()}`}
+              Brokerage: <strong style={{ color: !hasBrokerage ? '#166534' : '#B45309' }}>
+                {!hasBrokerage
+                  ? '₹0 (Zero Brokerage / Direct Owner)'
+                  : feeAmount > 0
+                  ? `₹${feeAmount.toLocaleString()}`
+                  : 'Brokerage Applicable (Contact Agent)'}
               </strong>
             </div>
           </div>

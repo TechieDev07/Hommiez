@@ -11,6 +11,7 @@ const INITIAL_DEMO_LISTINGS = [
     type: 'flat',
     rent: 12000,
     deposit: 12000,
+    hasBrokerage: false,
     brokerageFee: 0,
     locationName: 'North Campus, College Road',
     distanceFromCampusKm: 0.6,
@@ -24,6 +25,7 @@ const INITIAL_DEMO_LISTINGS = [
     type: 'pg',
     rent: 7500,
     deposit: 5000,
+    hasBrokerage: false,
     brokerageFee: 0,
     locationName: 'Green Park, Sector 4',
     distanceFromCampusKm: 1.1,
@@ -37,6 +39,7 @@ const INITIAL_DEMO_LISTINGS = [
     type: 'pg',
     rent: 8500,
     deposit: 8500,
+    hasBrokerage: true,
     brokerageFee: 1500,
     locationName: 'University Enclave',
     distanceFromCampusKm: 0.4,
@@ -54,6 +57,7 @@ export default function HomePage() {
     maxRent: '',
     maxDistance: '',
     gender: '',
+    brokerage: '',
   });
 
   const fetchListings = async () => {
@@ -64,6 +68,7 @@ export default function HomePage() {
       if (filters.maxRent) params.maxRent = filters.maxRent;
       if (filters.maxDistance) params.maxDistance = filters.maxDistance;
       if (filters.gender) params.gender = filters.gender;
+      if (filters.brokerage) params.brokerage = filters.brokerage;
 
       const response = await axiosClient.get('/listings', { params });
       if (response.data?.data && response.data.data.length > 0) {
@@ -83,7 +88,7 @@ export default function HomePage() {
   }, [filters]);
 
   const handleResetFilters = () => {
-    setFilters({ type: '', maxRent: '', maxDistance: '', gender: '' });
+    setFilters({ type: '', maxRent: '', maxDistance: '', gender: '', brokerage: '' });
   };
 
   return (
