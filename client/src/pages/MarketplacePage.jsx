@@ -66,7 +66,7 @@ export default function MarketplacePage() {
     category: 'furniture',
     price: '',
     isNegotiable: true,
-    location: 'Akurdi (Near College)',
+    itemAge: '',
     description: '',
     phone: '',
   });
@@ -94,7 +94,7 @@ export default function MarketplacePage() {
       category: newItem.category,
       price: Number(newItem.price),
       isNegotiable: newItem.isNegotiable,
-      location: newItem.location,
+      itemAge: newItem.age,
       sellerName: user?.name || 'Student',
       photos: selectedPhotos.length > 0 ? selectedPhotos : ['https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=500&q=80'],
       description: newItem.description,
@@ -245,12 +245,12 @@ export default function MarketplacePage() {
 
               <div className="form-group">
                 <label className="form-label">WhatsApp Number</label>
-                <input type="tel" required placeholder="9876543210" value={newItem.phone} onChange={(e) => setNewItem({ ...newItem, phone: e.target.value })} className="form-control" />
+                <input type="tel" required placeholder="0000000xxx" value={newItem.phone} onChange={(e) => setNewItem({ ...newItem, phone: e.target.value })} className="form-control" />
               </div>
 
               <div className="form-group">
                 <label className="form-label">Short Description</label>
-                <textarea rows="2" placeholder="Condition, reason for selling..." value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} className="form-control" />
+                <textarea rows="2" placeholder="About the product." value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} className="form-control" />
               </div>
 
               <button type="submit" className="btn-accent" style={{ width: '100%', marginTop: '0.5rem' }}>Post Item</button>
