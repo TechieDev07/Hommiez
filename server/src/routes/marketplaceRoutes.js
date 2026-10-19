@@ -3,6 +3,7 @@ import {
   getMarketplaceItems,
   createMarketplaceItem,
   markItemSold,
+  deleteMarketplaceItem,
 } from '../controllers/marketplaceController.js';
 import { protect } from '../middlewares/authMiddleware.js';
 
@@ -16,5 +17,8 @@ router.post('/', protect, createMarketplaceItem);
 
 // Private: mark item sold (owner only)
 router.patch('/:id/sold', protect, markItemSold);
+
+// Private: permanently delete an item (owner only)
+router.delete('/:id', protect, deleteMarketplaceItem);
 
 export default router;

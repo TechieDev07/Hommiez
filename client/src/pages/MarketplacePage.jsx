@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ShoppingBag, PlusCircle, MessageCircle, MapPin, X, Loader2 } from 'lucide-react';
+import { ShoppingBag, PlusCircle, MessageCircle, MapPin, X, Loader2, Trash2 } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
 
 const REGIONS = [
@@ -34,6 +34,7 @@ export default function MarketplacePage() {
     description: '',
     phone: '',
     location: '',
+    customLocation: '',
   });
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
@@ -88,6 +89,11 @@ export default function MarketplacePage() {
       }
 
       // Step 2: Save item to MongoDB
+      const finalLocation =
+        newItem.location === 'Other' && newItem.customLocation.trim()
+          ? newItem.customLocation.trim()
+          : newItem.location || 'Akurdi, Pune';
+
       const payload = {
         title: newItem.title,
         category: newItem.category,
@@ -95,7 +101,7 @@ export default function MarketplacePage() {
         isNegotiable: newItem.isNegotiable,
         itemAge: newItem.age,
         description: newItem.description,
-        location: newItem.location || 'Akurdi, Pune',
+        location: finalLocation,
         whatsapp: newItem.phone.replace(/[^0-9]/g, ''),
         photos: uploadedPhotos,
       };
@@ -117,6 +123,7 @@ export default function MarketplacePage() {
         description: '',
         phone: '',
         location: '',
+        customLocation: '',
       });
     } catch (err) {
       console.error('Failed to post item:', err);
@@ -125,6 +132,17 @@ export default function MarketplacePage() {
       );
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (itemId) => {
+    if (!window.confirm('Are you sure you want to delete this listing?')) return;
+    try {
+      await axiosClient.delete(`/marketplace/${itemId}`);
+      setItems((prev) => prev.filter((i) => i._id !== itemId));
+    } catch (err) {
+      console.error('Failed to delete item:', err);
+      alert(err?.response?.data?.message || 'Could not delete item.');
     }
   };
 
@@ -209,13 +227,33 @@ export default function MarketplacePage() {
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.65rem', borderTop: '1px solid var(--border-color)' }}>
                   <div style={{ fontSize: '1.25rem', fontWeight: '800' }}>₹{Number(item.price).toLocaleString()}</div>
-                  <a
-                    href={`https://wa.me/${item.whatsapp}?text=${encodeURIComponent(`Hi ${item.sellerName}, I saw your "${item.title}" on Hommiez!`)}`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="btn-primary" style={{ backgroundColor: '#25D366', padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}
-                  >
-                    <MessageCircle size={15} /> WhatsApp
-                  </a>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <a
+                      href={`https://wa.me/${item.whatsapp}?text=${encodeURIComponent(`Hi ${item.sellerName}, I saw your "${item.title}" on Hommiez!`)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="btn-primary" style={{ backgroundColor: '#25D366', padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}
+                    >
+                      <MessageCircle size={15} /> WhatsApp
+                    </a>
+                    {user && item.seller && String(user.id) === String(item.seller) && (
+                      <button
+                        onClick={() => handleDelete(item._id)}
+                        title="Delete your listing"
+                        style={{
+                          background: 'none',
+                          border: '1px solid #FCA5A5',
+                          borderRadius: 'var(--radius-md)',
+                          color: '#DC2626',
+                          padding: '0.45rem 0.6rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -277,10 +315,26 @@ export default function MarketplacePage() {
 
               <div className="form-group">
                 <label className="form-label">Location / Area</label>
-                <select value={newItem.location} onChange={(e) => setNewItem({ ...newItem, location: e.target.value })} className="form-control" required>
+                <select
+                  value={newItem.location}
+                  onChange={(e) => setNewItem({ ...newItem, location: e.target.value, customLocation: '' })}
+                  className="form-control"
+                  required={newItem.location !== 'Other'}
+                >
                   <option value="">Select Area</option>
                   {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
+                {newItem.location === 'Other' && (
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Wakad, Baner, FC Road…"
+                    value={newItem.customLocation}
+                    onChange={(e) => setNewItem({ ...newItem, customLocation: e.target.value })}
+                    className="form-control"
+                    style={{ marginTop: '0.5rem' }}
+                  />
+                )}
               </div>
 
               {/* Photos */}

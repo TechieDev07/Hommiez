@@ -102,3 +102,24 @@ export const markItemSold = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Permanently delete a marketplace item (owner only)
+ * @route   DELETE /api/v1/marketplace/:id
+ * @access  Private (owner only)
+ */
+export const deleteMarketplaceItem = async (req, res, next) => {
+  try {
+    const item = await MarketplaceItem.findById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Item not found.' });
+    }
+    if (item.seller.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Not authorized to delete this item.' });
+    }
+    await item.deleteOne();
+    res.status(200).json({ success: true, message: 'Item deleted successfully.' });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -3,6 +3,7 @@ import {
   getFlatmatePosts,
   createFlatmatePost,
   deactivateFlatmatePost,
+  deleteFlatmatePost,
 } from '../controllers/flatmateController.js';
 import { protect } from '../middlewares/authMiddleware.js';
 
@@ -16,5 +17,8 @@ router.post('/', protect, createFlatmatePost);
 
 // Private: deactivate a post (owner only)
 router.patch('/:id/deactivate', protect, deactivateFlatmatePost);
+
+// Private: permanently delete a post (owner only)
+router.delete('/:id', protect, deleteFlatmatePost);
 
 export default router;

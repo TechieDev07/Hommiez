@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   Users, SlidersHorizontal, PlusCircle, MessageCircle,
-  CheckCircle2, GraduationCap, RotateCcw, X, MapPin, Loader2,
+  CheckCircle2, GraduationCap, RotateCcw, X, MapPin, Loader2, Trash2,
 } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
 
@@ -27,7 +27,7 @@ export default function FlatmatesPage() {
   const [showModal, setShowModal] = useState(false);
   const [newPost, setNewPost] = useState({
     name: '', college: '', gender: 'boys_only',
-    budget: '', region: '', habits: '', bio: '', phone: '',
+    budget: '', region: '', customRegion: '', habits: '', bio: '', phone: '',
   });
 
   // ── Load posts from MongoDB on mount / filter change ───────────────────────
@@ -64,23 +64,28 @@ export default function FlatmatesPage() {
     setError('');
 
     try {
+      // If user picked "Other" and typed a custom region, use that
+      const finalRegion =
+        newPost.region === 'Other' && newPost.customRegion.trim()
+          ? newPost.customRegion.trim()
+          : newPost.region || 'Other';
+
       const payload = {
         name: newPost.name,
         college: newPost.college,
         gender: newPost.gender,
         budget: Number(newPost.budget),
-        region: newPost.region || 'Other',
+        region: finalRegion,
         habits: newPost.habits,
         bio: newPost.bio,
         whatsapp: newPost.phone.replace(/[^0-9]/g, ''),
       };
 
       const res = await axiosClient.post('/flatmates', payload);
-      // Prepend new post to the list
       setPosts((prev) => [res.data.data, ...prev]);
 
       setShowModal(false);
-      setNewPost({ name: '', college: '', gender: 'boys_only', budget: '', region: '', habits: '', bio: '', phone: '' });
+      setNewPost({ name: '', college: '', gender: 'boys_only', budget: '', region: '', customRegion: '', habits: '', bio: '', phone: '' });
     } catch (err) {
       console.error('Failed to publish flatmate post:', err);
       setError(
@@ -88,6 +93,17 @@ export default function FlatmatesPage() {
       );
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (postId) => {
+    if (!window.confirm('Are you sure you want to delete this post?')) return;
+    try {
+      await axiosClient.delete(`/flatmates/${postId}`);
+      setPosts((prev) => prev.filter((p) => p._id !== postId));
+    } catch (err) {
+      console.error('Failed to delete post:', err);
+      alert(err?.response?.data?.message || 'Could not delete post.');
     }
   };
 
@@ -226,15 +242,35 @@ export default function FlatmatesPage() {
                 </div>
               )}
 
-              {/* WhatsApp */}
-              <a
-                href={`https://wa.me/${post.whatsapp}?text=${encodeURIComponent(`Hi ${post.name}, saw your flatmate post on Hommiez!`)}`}
-                target="_blank" rel="noopener noreferrer"
-                className="btn-primary"
-                style={{ width: '100%', backgroundColor: '#25D366', fontSize: '0.85rem', padding: '0.5rem' }}
-              >
-                <MessageCircle size={15} /> Chat on WhatsApp
-              </a>
+              {/* WhatsApp + Delete */}
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
+                <a
+                  href={`https://wa.me/${post.whatsapp}?text=${encodeURIComponent(`Hi ${post.name}, saw your flatmate post on Hommiez!`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="btn-primary"
+                  style={{ flex: 1, backgroundColor: '#25D366', fontSize: '0.85rem', padding: '0.5rem' }}
+                >
+                  <MessageCircle size={15} /> Chat on WhatsApp
+                </a>
+                {user && post.poster && String(user.id) === String(post.poster) && (
+                  <button
+                    onClick={() => handleDelete(post._id)}
+                    title="Delete your post"
+                    style={{
+                      background: 'none',
+                      border: '1px solid #FCA5A5',
+                      borderRadius: 'var(--radius-md)',
+                      color: '#DC2626',
+                      padding: '0.5rem 0.65rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -280,10 +316,26 @@ export default function FlatmatesPage() {
               <div className="form-grid-2">
                 <div className="form-group">
                   <label className="form-label">Region / Area</label>
-                  <select value={newPost.region} onChange={(e) => setNewPost({ ...newPost, region: e.target.value })} className="form-control">
+                  <select
+                    value={newPost.region}
+                    onChange={(e) => setNewPost({ ...newPost, region: e.target.value, customRegion: '' })}
+                    className="form-control"
+                    required={newPost.region !== 'Other'}
+                  >
                     <option value="">Select Area</option>
                     {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
+                  {newPost.region === 'Other' && (
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Wakad, Baner, FC Road…"
+                      value={newPost.customRegion}
+                      onChange={(e) => setNewPost({ ...newPost, customRegion: e.target.value })}
+                      className="form-control"
+                      style={{ marginTop: '0.5rem' }}
+                    />
+                  )}
                 </div>
                 <div className="form-group">
                   <label className="form-label">College (optional)</label>
