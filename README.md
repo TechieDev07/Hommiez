@@ -39,36 +39,3 @@ hommiez/
     └── vite.config.js
 ```
 
----
-
-## 🚀 How to Run Locally
-
-### 1. Start the Backend (`/server`)
-```bash
-cd server
-npm install
-# Copy .env.example to .env and add your MongoDB Atlas URI & JWT secret
-npm run dev
-```
-* Backend runs on: `http://localhost:5000`
-* Health Check: `http://localhost:5000/api/v1/health`
-
-### 2. Start the Frontend (`/client`)
-```bash
-cd client
-npm install
-npm run dev
-```
-* Frontend runs on: `http://localhost:5173`
-
----
-
-## 🔑 Key Features Built in Phase 1
-
-1. **Flexible Personal Email Registration:** Students and property owners/brokers can sign up using any personal email (Gmail, Outlook, etc.).
-2. **Role-Based Experience:**
-   * **Students / Seekers:** Browse live listings, filter by distance to college, budget, and flat vs PG, and unlock owner contact numbers.
-   * **Brokers / Property Owners:** Post new flats and PGs, toggle `Available / Rented`, and see live lead counts of students who unlocked their listing.
-3. **Upfront Brokerage Transparency:** Every listing prominently displays whether it is direct owner (₹0 brokerage) or states the exact fee upfront.
-4. **Direct WhatsApp Connect:** When a student unlocks a property contact, it generates a pre-filled WhatsApp click-to-chat button directly to the owner.
-5. **30-Day Auto-Expiration:** Listings have a MongoDB TTL index that expires inactive listings after 30 days unless renewed.
