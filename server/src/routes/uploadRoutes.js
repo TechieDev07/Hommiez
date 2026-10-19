@@ -1,18 +1,17 @@
 import express from 'express';
 import { upload } from '../middlewares/uploadMiddleware.js';
-import { protect, authorize } from '../middlewares/authMiddleware.js';
+import { protect } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 /**
- * @desc    Upload up to 5 listing photos to Cloudinary
+ * @desc    Upload up to 5 photos to Cloudinary
  * @route   POST /api/v1/upload
- * @access  Private (Owner / Broker)
+ * @access  Private (any authenticated user — students for marketplace, brokers for listings)
  */
 router.post(
   '/',
   protect,
-  authorize('broker'),
   upload.array('photos', 5),
   (req, res) => {
     if (!req.files || req.files.length === 0) {
@@ -22,7 +21,7 @@ router.post(
       });
     }
 
-    // Map uploaded files to URL and publicId format expected by Listing model
+    // Map uploaded files to { url, publicId } format expected by Listing/MarketplaceItem models
     const uploadedPhotos = req.files.map((file) => ({
       url: file.path,
       publicId: file.filename,

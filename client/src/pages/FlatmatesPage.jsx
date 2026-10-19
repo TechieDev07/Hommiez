@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   Users, SlidersHorizontal, PlusCircle, MessageCircle,
-  CheckCircle2, GraduationCap, RotateCcw, X, MapPin,
+  CheckCircle2, GraduationCap, RotateCcw, X, MapPin, Loader2,
 } from 'lucide-react';
+import axiosClient from '../api/axiosClient';
 
 const REGIONS = [
   'Akurdi (Near Rly Stn)',
@@ -16,48 +17,12 @@ const REGIONS = [
   'Other',
 ];
 
-const INITIAL_POSTS = [
-  {
-    _id: 'fm1',
-    name: 'Rohan Verma',
-    college: 'PCCoE (2nd Year CSE)',
-    gender: 'boys_only',
-    budget: 6500,
-    region: 'Akurdi (Near Rly Stn)',
-    habits: ['Non-smoker', 'Night Owl', 'Veg Only'],
-    bio: 'Looking for a chill flatmate to share a 2BHK flat. I keep the room clean and love gaming on weekends.',
-    whatsapp: '919876543211',
-    createdAt: '2 days ago',
-  },
-  {
-    _id: 'fm2',
-    name: 'Priya Sen',
-    college: 'PCCoE (1st Year IT)',
-    gender: 'girls_only',
-    budget: 8000,
-    region: 'Pradhikaran',
-    habits: ['Early Riser', 'Quiet Study'],
-    bio: 'Looking for 1 female flatmate for a furnished 2BHK with AC and WiFi. Room is ready to move.',
-    whatsapp: '919876543212',
-    createdAt: 'Yesterday',
-  },
-  {
-    _id: 'fm3',
-    name: 'Arjun & Sahil',
-    college: 'PCCoE (3rd Year Mech)',
-    gender: 'boys_only',
-    budget: 5000,
-    region: 'Akurdi (Near College Gate)',
-    habits: [],
-    bio: 'We have 1 vacant room in our 3BHK flat. Looking for a neat and friendly guy. ₹5,000 per person.',
-    whatsapp: '919876543213',
-    createdAt: '3 days ago',
-  },
-];
-
 export default function FlatmatesPage() {
   const { user } = useAuth();
-  const [posts, setPosts] = useState(INITIAL_POSTS);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const [filters, setFilters] = useState({ gender: '', maxBudget: '', region: '' });
   const [showModal, setShowModal] = useState(false);
   const [newPost, setNewPost] = useState({
@@ -65,33 +30,65 @@ export default function FlatmatesPage() {
     budget: '', region: '', habits: '', bio: '', phone: '',
   });
 
-  // Filter
-  const filtered = posts.filter((p) => {
-    if (filters.gender && p.gender !== filters.gender) return false;
-    if (filters.maxBudget && p.budget > Number(filters.maxBudget)) return false;
-    if (filters.region && p.region !== filters.region) return false;
-    return true;
-  });
+  // ── Load posts from MongoDB on mount / filter change ───────────────────────
+  useEffect(() => {
+    fetchPosts();
+  }, [filters]);
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    try {
+      const params = {};
+      if (filters.gender) params.gender = filters.gender;
+      if (filters.region) params.region = filters.region;
+      if (filters.maxBudget) params.maxBudget = filters.maxBudget;
+
+      const res = await axiosClient.get('/flatmates', { params });
+      setPosts(res.data.data || []);
+    } catch (err) {
+      console.error('Failed to load flatmate posts:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const resetFilters = () => setFilters({ gender: '', maxBudget: '', region: '' });
 
-  const handleCreate = (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault();
-    const created = {
-      _id: 'fm_' + Date.now(),
-      name: newPost.name,
-      college: newPost.college || 'College Student',
-      gender: newPost.gender,
-      budget: Number(newPost.budget),
-      region: newPost.region || 'Other',
-      habits: newPost.habits ? newPost.habits.split(',').map((h) => h.trim()).filter(Boolean) : [],
-      bio: newPost.bio,
-      whatsapp: newPost.phone.replace(/[^0-9]/g, '') || '919876543210',
-      createdAt: 'Just now',
-    };
-    setPosts([created, ...posts]);
-    setShowModal(false);
-    setNewPost({ name: '', college: '', gender: 'boys_only', budget: '', region: '', habits: '', bio: '', phone: '' });
+    if (!user) {
+      setError('Please log in to post a flatmate request.');
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+
+    try {
+      const payload = {
+        name: newPost.name,
+        college: newPost.college,
+        gender: newPost.gender,
+        budget: Number(newPost.budget),
+        region: newPost.region || 'Other',
+        habits: newPost.habits,
+        bio: newPost.bio,
+        whatsapp: newPost.phone.replace(/[^0-9]/g, ''),
+      };
+
+      const res = await axiosClient.post('/flatmates', payload);
+      // Prepend new post to the list
+      setPosts((prev) => [res.data.data, ...prev]);
+
+      setShowModal(false);
+      setNewPost({ name: '', college: '', gender: 'boys_only', budget: '', region: '', habits: '', bio: '', phone: '' });
+    } catch (err) {
+      console.error('Failed to publish flatmate post:', err);
+      setError(
+        err?.response?.data?.message || 'Failed to publish request. Please try again.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -151,85 +148,97 @@ export default function FlatmatesPage() {
 
       {/* Count */}
       <h2 style={{ fontSize: '1.15rem', fontWeight: '700', marginBottom: '1rem' }}>
-        Active Requests ({filtered.length})
+        Active Requests ({posts.length})
       </h2>
 
       {/* Cards Grid */}
-      <div className="listings-grid">
-        {filtered.map((post) => (
-          <div key={post._id} className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column' }}>
-            {/* Student Info */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <div style={{
-                  width: '40px', height: '40px', borderRadius: '50%',
-                  backgroundColor: post.gender === 'girls_only' ? '#FCE7F3' : '#E0E7FF',
-                  color: post.gender === 'girls_only' ? '#BE185D' : '#3730A3',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: '800', fontSize: '1.05rem',
-                }}>
-                  {post.name[0]}
-                </div>
-                <div>
-                  <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>{post.name}</h3>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <GraduationCap size={12} /> {post.college}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+          <Loader2 size={32} style={{ animation: 'spin 1s linear infinite' }} />
+          <p style={{ marginTop: '0.75rem' }}>Loading posts…</p>
+        </div>
+      ) : posts.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+          <Users size={48} style={{ marginBottom: '1rem', opacity: 0.4 }} />
+          <p>No flatmate requests yet. Post yours!</p>
+        </div>
+      ) : (
+        <div className="listings-grid">
+          {posts.map((post) => (
+            <div key={post._id} className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column' }}>
+              {/* Student Info */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div style={{
+                    width: '40px', height: '40px', borderRadius: '50%',
+                    backgroundColor: post.gender === 'girls_only' ? '#FCE7F3' : '#E0E7FF',
+                    color: post.gender === 'girls_only' ? '#BE185D' : '#3730A3',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontWeight: '800', fontSize: '1.05rem',
+                  }}>
+                    {post.name[0]}
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>{post.name}</h3>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <GraduationCap size={12} /> {post.college}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <span className={`badge ${post.gender === 'girls_only' ? 'badge-rented' : 'badge-flat'}`}>
-                {post.gender === 'girls_only' ? 'Girls' : 'Boys'}
-              </span>
-            </div>
-
-            {/* Budget + Region */}
-            <div style={{
-              backgroundColor: '#F8FAFC', borderRadius: 'var(--radius-md)',
-              padding: '0.65rem 0.85rem', marginBottom: '0.85rem',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            }}>
-              <div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Budget</span>
-                <span style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--primary)' }}>
-                  ₹{post.budget.toLocaleString()}<span style={{ fontSize: '0.7rem', fontWeight: '500' }}>/mo</span>
+                <span className={`badge ${post.gender === 'girls_only' ? 'badge-rented' : 'badge-flat'}`}>
+                  {post.gender === 'girls_only' ? 'Girls' : 'Boys'}
                 </span>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Area</span>
-                <span style={{ fontSize: '0.8rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                  <MapPin size={12} color="var(--primary)" /> {post.region}
-                </span>
-              </div>
-            </div>
 
-            {/* Bio */}
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.55, marginBottom: '0.85rem', flexGrow: 1 }}>
-              "{post.bio}"
-            </p>
-
-            {/* Habits (optional — only show if present) */}
-            {post.habits && post.habits.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '1rem' }}>
-                {post.habits.map((h, i) => (
-                  <span key={i} className="badge badge-distance" style={{ fontSize: '0.7rem' }}>
-                    <CheckCircle2 size={11} color="var(--primary)" /> {h}
+              {/* Budget + Region */}
+              <div style={{
+                backgroundColor: '#F8FAFC', borderRadius: 'var(--radius-md)',
+                padding: '0.65rem 0.85rem', marginBottom: '0.85rem',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              }}>
+                <div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Budget</span>
+                  <span style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--primary)' }}>
+                    ₹{Number(post.budget).toLocaleString()}<span style={{ fontSize: '0.7rem', fontWeight: '500' }}>/mo</span>
                   </span>
-                ))}
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Area</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                    <MapPin size={12} color="var(--primary)" /> {post.region}
+                  </span>
+                </div>
               </div>
-            )}
 
-            {/* WhatsApp */}
-            <a
-              href={`https://wa.me/${post.whatsapp}?text=${encodeURIComponent(`Hi ${post.name}, saw your flatmate post on Hommiez!`)}`}
-              target="_blank" rel="noopener noreferrer"
-              className="btn-primary"
-              style={{ width: '100%', backgroundColor: '#25D366', fontSize: '0.85rem', padding: '0.5rem' }}
-            >
-              <MessageCircle size={15} /> Chat on WhatsApp
-            </a>
-          </div>
-        ))}
-      </div>
+              {/* Bio */}
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.55, marginBottom: '0.85rem', flexGrow: 1 }}>
+                "{post.bio}"
+              </p>
+
+              {/* Habits */}
+              {post.habits && post.habits.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '1rem' }}>
+                  {post.habits.map((h, i) => (
+                    <span key={i} className="badge badge-distance" style={{ fontSize: '0.7rem' }}>
+                      <CheckCircle2 size={11} color="var(--primary)" /> {h}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* WhatsApp */}
+              <a
+                href={`https://wa.me/${post.whatsapp}?text=${encodeURIComponent(`Hi ${post.name}, saw your flatmate post on Hommiez!`)}`}
+                target="_blank" rel="noopener noreferrer"
+                className="btn-primary"
+                style={{ width: '100%', backgroundColor: '#25D366', fontSize: '0.85rem', padding: '0.5rem' }}
+              >
+                <MessageCircle size={15} /> Chat on WhatsApp
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Modal */}
       {showModal && (
@@ -239,6 +248,12 @@ export default function FlatmatesPage() {
               <h2 style={{ fontSize: '1.25rem', fontWeight: '800' }}>Post Flatmate Request</h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none' }}><X size={20} /></button>
             </div>
+
+            {error && (
+              <div style={{ backgroundColor: '#FEE2E2', color: '#DC2626', borderRadius: '8px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                {error}
+              </div>
+            )}
 
             <form onSubmit={handleCreate}>
               <div className="form-group">
@@ -295,7 +310,11 @@ export default function FlatmatesPage() {
                   onChange={(e) => setNewPost({ ...newPost, bio: e.target.value })} className="form-control" />
               </div>
 
-              <button type="submit" className="btn-accent" style={{ width: '100%', marginTop: '0.5rem' }}>Publish Request</button>
+              <button type="submit" className="btn-accent" style={{ width: '100%', marginTop: '0.5rem' }} disabled={submitting}>
+                {submitting ? (
+                  <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Publishing…</>
+                ) : 'Publish Request'}
+              </button>
             </form>
           </div>
         </div>

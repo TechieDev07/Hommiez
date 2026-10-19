@@ -9,6 +9,8 @@ import authRoutes from './routes/authRoutes.js';
 import listingRoutes from './routes/listingRoutes.js';
 import leadRoutes from './routes/leadRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import marketplaceRoutes from './routes/marketplaceRoutes.js';
+import flatmateRoutes from './routes/flatmateRoutes.js';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -42,6 +44,8 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/listings', listingRoutes);
 app.use('/api/v1/leads', leadRoutes);
 app.use('/api/v1/upload', uploadRoutes);
+app.use('/api/v1/marketplace', marketplaceRoutes);
+app.use('/api/v1/flatmates', flatmateRoutes);
 
 // Centralized Error Handler (must be after all routes)
 app.use(errorHandler);
