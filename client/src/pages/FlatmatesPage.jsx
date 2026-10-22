@@ -9,7 +9,7 @@ import ConfirmDialog from '../components/common/ConfirmDialog';
 
 const REGIONS = [
   'Akurdi (Near Rly Stn)',
-  'Akurdi (Near College Gate)',
+  // 'Akurdi (Near College Gate)',
   'Pradhikaran',
   'Nigdi',
   'Chinchwad',
@@ -155,8 +155,8 @@ export default function FlatmatesPage() {
             <select value={filters.maxBudget} onChange={(e) => setFilters({ ...filters, maxBudget: e.target.value })} className="form-control">
               <option value="">Any</option>
               <option value="5000">Under ₹5,000</option>
-              <option value="7000">Under ₹7,000</option>
-              <option value="10000">Under ₹10,000</option>
+              <option value="7000">Under ₹10,000</option>
+              <option value="10000">Under ₹20,000</option>
             </select>
           </div>
           <div style={{ flex: 1, minWidth: '140px' }}>
@@ -336,7 +336,7 @@ export default function FlatmatesPage() {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Wakad, Baner, FC Road…"
+                      placeholder="e.g. Ravet, Akrudi, Nigdi.."
                       value={newPost.customRegion}
                       onChange={(e) => setNewPost({ ...newPost, customRegion: e.target.value })}
                       className="form-control"
@@ -346,7 +346,7 @@ export default function FlatmatesPage() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">College (optional)</label>
-                  <input type="text" placeholder="e.g. PCCoE" value={newPost.college}
+                  <input type="text" placeholder="e.g. XYZ University" value={newPost.college}
                     onChange={(e) => setNewPost({ ...newPost, college: e.target.value })} className="form-control" />
                 </div>
               </div>
@@ -359,13 +359,13 @@ export default function FlatmatesPage() {
 
               <div className="form-group">
                 <label className="form-label">WhatsApp Number</label>
-                <input type="tel" required placeholder="9876543210" value={newPost.phone}
+                <input type="tel" required placeholder="99999xxxx" value={newPost.phone}
                   onChange={(e) => setNewPost({ ...newPost, phone: e.target.value })} className="form-control" />
               </div>
 
               <div className="form-group">
                 <label className="form-label">Short Bio</label>
-                <textarea rows="2" required placeholder="Looking for a flatmate in 2BHK near college..." value={newPost.bio}
+                <textarea rows="2" required placeholder="Jo tujhe theek lge likh  de..." value={newPost.bio}
                   onChange={(e) => setNewPost({ ...newPost, bio: e.target.value })} className="form-control" />
               </div>
 
