@@ -160,7 +160,7 @@ export default function App() {
                   width: '100%',
                 }}
               >
-                © {new Date().getFullYear()} Hommiez. All rights reserved.
+               {new Date().getFullYear()} Hommiez- by someone like you only.🩶 
               </p>
             </div>
           </footer>
