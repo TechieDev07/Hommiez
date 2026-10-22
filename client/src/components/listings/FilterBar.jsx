@@ -69,10 +69,10 @@ export default function FilterBar({ filters, setFilters, onReset }) {
             className="form-control"
           >
             <option value="">Any Budget</option>
-            <option value="6000">Under ₹6,000</option>
-            <option value="10000">Under ₹10,000</option>
-            <option value="15000">Under ₹15,000</option>
-            <option value="20000">Under ₹20,000</option>
+            <option value="6000">Under ₹20,000</option>
+            <option value="10000">Under ₹30,000</option>
+            <option value="15000">Under ₹40,000</option>
+            <option value="20000">Under ₹50,000</option>
           </select>
         </div>
 
