@@ -88,8 +88,8 @@ export default function FilterBar({ filters, setFilters, onReset }) {
             <option value="">Any Distance</option>
             <option value="1">Walking distance (within 1 km)</option>
             <option value="2">Within 2 km</option>
-            <option value="3">Within 3 km</option>
-            <option value="5">Within 5 km</option>
+            <option value="3">Within 5 km</option>
+            <option value="5">Within 10 km</option>
           </select>
         </div>
 
