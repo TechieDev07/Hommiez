@@ -301,7 +301,7 @@ export default function FlatmatesPage() {
             <form onSubmit={handleCreate}>
               <div className="form-group">
                 <label className="form-label">Your Name</label>
-                <input type="text" required placeholder="e.g. Rahul Sharma" value={newPost.name}
+                <input type="text" required placeholder="e.g. Dev Tomar" value={newPost.name}
                   onChange={(e) => setNewPost({ ...newPost, name: e.target.value })} className="form-control" />
               </div>
 
@@ -315,7 +315,7 @@ export default function FlatmatesPage() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Monthly Budget (₹)</label>
-                  <input type="number" required placeholder="6000" value={newPost.budget}
+                  <input type="number" required placeholder="ex: 5000" value={newPost.budget}
                     onChange={(e) => setNewPost({ ...newPost, budget: e.target.value })} className="form-control" />
                 </div>
               </div>
@@ -359,7 +359,7 @@ export default function FlatmatesPage() {
 
               <div className="form-group">
                 <label className="form-label">WhatsApp Number</label>
-                <input type="tel" required placeholder="99999xxxx" value={newPost.phone}
+                <input type="tel" required placeholder="99999XXXX" value={newPost.phone}
                   onChange={(e) => setNewPost({ ...newPost, phone: e.target.value })} className="form-control" />
               </div>
 
