@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ShoppingBag, PlusCircle, MessageCircle, MapPin, X, Loader2, Trash2 } from 'lucide-react';
+import { ShoppingBag, PlusCircle, MessageCircle, MapPin, X, Loader2, Trash2, Lock } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 
@@ -17,6 +18,8 @@ const REGIONS = [
 
 export default function MarketplacePage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -42,10 +45,10 @@ export default function MarketplacePage() {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
 
-  // ── Load items from MongoDB on mount ──────────────────────────────────────
+  // ── Load items from MongoDB on mount / filter / auth change ───────────────
   useEffect(() => {
     fetchItems();
-  }, [category, negotiableFilter]);
+  }, [category, negotiableFilter, user]);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -235,13 +238,35 @@ export default function MarketplacePage() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.65rem', borderTop: '1px solid var(--border-color)' }}>
                   <div style={{ fontSize: '1.25rem', fontWeight: '800' }}>₹{Number(item.price).toLocaleString()}</div>
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <a
-                      href={`https://wa.me/${item.whatsapp}?text=${encodeURIComponent(`Hi ${item.sellerName}, I saw your "${item.title}" on Hommiez!`)}`}
-                      target="_blank" rel="noopener noreferrer"
-                      className="btn-primary" style={{ backgroundColor: '#25D366', padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}
-                    >
-                      <MessageCircle size={15} /> WhatsApp
-                    </a>
+                    {user ? (
+                      <a
+                        href={`https://wa.me/${item.whatsapp}?text=${encodeURIComponent(`Hi ${item.sellerName}, I saw your "${item.title}" on Hommiez!`)}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="btn-primary" style={{ backgroundColor: '#25D366', padding: '0.45rem 0.85rem', fontSize: '0.85rem', minHeight: '36px' }}
+                      >
+                        <MessageCircle size={15} /> WhatsApp
+                      </a>
+                    ) : (
+                      <button
+                        onClick={() => navigate('/login', { state: { from: location.pathname } })}
+                        className="btn-outline"
+                        style={{
+                          padding: '0.45rem 0.85rem',
+                          fontSize: '0.85rem',
+                          minHeight: '36px',
+                          color: 'var(--primary)',
+                          borderColor: 'rgba(37, 99, 235, 0.35)',
+                          backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          fontWeight: '600',
+                        }}
+                        title="Please log in first to chat on WhatsApp"
+                      >
+                        <Lock size={14} /> Log in to Chat
+                      </button>
+                    )}
                     {user && item.seller && String(user?.id || user?._id) === String(item?.seller?._id || item?.seller) && (
                       <button
                         onClick={() => setDeleteTargetId(item._id)}

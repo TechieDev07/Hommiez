@@ -5,12 +5,12 @@ import {
   deactivateFlatmatePost,
   deleteFlatmatePost,
 } from '../controllers/flatmateController.js';
-import { protect } from '../middlewares/authMiddleware.js';
+import { protect, optionalAuth } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// Public: list all active flatmate posts
-router.get('/', getFlatmatePosts);
+// Public / optionally authenticated: list all active flatmate posts
+router.get('/', optionalAuth, getFlatmatePosts);
 
 // Private: create a new flatmate post (any logged-in user)
 router.post('/', protect, createFlatmatePost);

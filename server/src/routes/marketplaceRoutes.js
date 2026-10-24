@@ -5,12 +5,12 @@ import {
   markItemSold,
   deleteMarketplaceItem,
 } from '../controllers/marketplaceController.js';
-import { protect } from '../middlewares/authMiddleware.js';
+import { protect, optionalAuth } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// Public: list all items
-router.get('/', getMarketplaceItems);
+// Public / optionally authenticated: list all items
+router.get('/', optionalAuth, getMarketplaceItems);
 
 // Private: create a new item listing (any logged-in user)
 router.post('/', protect, createMarketplaceItem);

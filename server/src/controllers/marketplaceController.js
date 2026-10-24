@@ -27,11 +27,16 @@ export const getMarketplaceItems = async (req, res, next) => {
       MarketplaceItem.countDocuments(query),
     ]);
 
+    const sanitizedItems = items.map((item) => ({
+      ...item,
+      whatsapp: req.user ? item.whatsapp : '',
+    }));
+
     res.status(200).json({
       success: true,
-      count: items.length,
+      count: sanitizedItems.length,
       totalCount,
-      data: items,
+      data: sanitizedItems,
     });
   } catch (error) {
     next(error);

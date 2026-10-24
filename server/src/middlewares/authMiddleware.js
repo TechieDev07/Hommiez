@@ -57,3 +57,30 @@ export const authorize = (...roles) => {
     next();
   };
 };
+
+/**
+ * Middleware: Optional authentication
+ * Attaches user to req.user if a valid token exists, but doesn't block if missing or invalid.
+ */
+export const optionalAuth = async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_jwt_secret_hommiez');
+    const user = await User.findById(decoded.id).select('-password');
+    if (user) {
+      req.user = user;
+    }
+  } catch (error) {
+    // Proceed as unauthenticated on error/expiration
+  }
+  next();
+};

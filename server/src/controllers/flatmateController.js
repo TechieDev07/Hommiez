@@ -26,11 +26,16 @@ export const getFlatmatePosts = async (req, res, next) => {
       FlatmatePost.countDocuments(query),
     ]);
 
+    const sanitizedPosts = posts.map((post) => ({
+      ...post,
+      whatsapp: req.user ? post.whatsapp : '',
+    }));
+
     res.status(200).json({
       success: true,
-      count: posts.length,
+      count: sanitizedPosts.length,
       totalCount,
-      data: posts,
+      data: sanitizedPosts,
     });
   } catch (error) {
     next(error);

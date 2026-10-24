@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Users, SlidersHorizontal, PlusCircle, MessageCircle,
-  CheckCircle2, GraduationCap, RotateCcw, X, MapPin, Loader2, Trash2,
+  CheckCircle2, GraduationCap, RotateCcw, X, MapPin, Loader2, Trash2, Lock,
 } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
 import ConfirmDialog from '../components/common/ConfirmDialog';
@@ -20,6 +21,8 @@ const REGIONS = [
 
 export default function FlatmatesPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -33,10 +36,10 @@ export default function FlatmatesPage() {
     budget: '', region: '', customRegion: '', habits: '', bio: '', phone: '',
   });
 
-  // ── Load posts from MongoDB on mount / filter change ───────────────────────
+  // ── Load posts from MongoDB on mount / filter change / auth change ─────────
   useEffect(() => {
     fetchPosts();
-  }, [filters]);
+  }, [filters, user]);
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -251,14 +254,38 @@ export default function FlatmatesPage() {
 
               {/* WhatsApp + Delete */}
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
-                <a
-                  href={`https://wa.me/${post.whatsapp}?text=${encodeURIComponent(`Hi ${post.name}, saw your flatmate post on Hommiez!`)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="btn-primary"
-                  style={{ flex: 1, backgroundColor: '#25D366', fontSize: '0.85rem', padding: '0.5rem' }}
-                >
-                  <MessageCircle size={15} /> Chat on WhatsApp
-                </a>
+                {user ? (
+                  <a
+                    href={`https://wa.me/${post.whatsapp}?text=${encodeURIComponent(`Hi ${post.name}, saw your flatmate post on Hommiez!`)}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="btn-primary"
+                    style={{ flex: 1, backgroundColor: '#25D366', fontSize: '0.85rem', padding: '0.5rem', minHeight: '38px' }}
+                  >
+                    <MessageCircle size={15} /> Chat on WhatsApp
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => navigate('/login', { state: { from: location.pathname } })}
+                    className="btn-outline"
+                    style={{
+                      flex: 1,
+                      fontSize: '0.85rem',
+                      padding: '0.5rem',
+                      minHeight: '38px',
+                      color: 'var(--primary)',
+                      borderColor: 'rgba(37, 99, 235, 0.35)',
+                      backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.4rem',
+                      fontWeight: '600',
+                    }}
+                    title="Please log in first to chat on WhatsApp"
+                  >
+                    <Lock size={14} /> Log in to Chat
+                  </button>
+                )}
                 {user && post.poster && String(user?.id || user?._id) === String(post.poster?._id || post.poster) && (
                   <button
                     onClick={() => setDeleteTargetId(post._id)}

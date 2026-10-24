@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Home, LogIn } from 'lucide-react';
+import { Home, LogIn, Lock } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -11,6 +11,9 @@ export default function LoginPage() {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = location.state?.from;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +22,9 @@ export default function LoginPage() {
 
     try {
       const loggedUser = await login(email, password);
-      if (loggedUser.role === 'broker') {
+      if (from) {
+        navigate(from, { replace: true });
+      } else if (loggedUser.role === 'broker') {
         navigate('/broker/dashboard');
       } else {
         navigate('/');
@@ -35,7 +40,7 @@ export default function LoginPage() {
     <div className="container" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1.25rem' }}>
       <div className="card" style={{ width: '100%', maxWidth: '440px', padding: '2.5rem' }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -54,6 +59,27 @@ export default function LoginPage() {
             Log in to your Hommiez account
           </p>
         </div>
+
+        {/* Return Notice */}
+        {from && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.55rem',
+            backgroundColor: '#EFF6FF',
+            border: '1px solid #BFDBFE',
+            color: '#1D4ED8',
+            padding: '0.65rem 0.85rem',
+            borderRadius: 'var(--radius-md)',
+            fontSize: '0.825rem',
+            marginBottom: '1.25rem',
+            fontWeight: '500',
+            lineHeight: 1.4,
+          }}>
+            <Lock size={15} style={{ flexShrink: 0 }} />
+            <span>Please log in first to chat on WhatsApp. You'll be returned directly after logging in!</span>
+          </div>
+        )}
 
         {/* Error message */}
         {error && (
