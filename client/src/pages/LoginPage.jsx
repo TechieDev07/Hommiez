@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Home, LogIn, Lock } from 'lucide-react';
+import PasswordInput from '../components/common/PasswordInput';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -110,14 +111,21 @@ export default function LoginPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+              <label className="form-label" style={{ margin: 0 }}>Password</label>
+              <Link
+                to="/forgot-password"
+                style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: '600' }}
+              >
+                Forgot Password?
+              </Link>
+            </div>
+            <PasswordInput
               required
-              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="form-control"
+              placeholder="••••••••"
+              autoComplete="current-password"
             />
           </div>
 
