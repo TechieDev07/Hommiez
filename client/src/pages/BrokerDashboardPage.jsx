@@ -756,6 +756,90 @@ export default function BrokerDashboardPage() {
                 </div>
               </div>
 
+              {/* Contact Sharing Preference - Mandatory Section */}
+              <div
+                className="form-group"
+                style={{
+                  marginBottom: '1.4rem',
+                  padding: '1.1rem',
+                  backgroundColor: '#F8FAFC',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1.5px solid #CBD5E1',
+                }}
+              >
+                <label className="form-label" style={{ fontWeight: '800', fontSize: '0.925rem', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
+                  Do you want to share your contact details with interested students? <span style={{ color: '#DC2626' }}>*</span>
+                </label>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.85rem' }}>
+                  Choose whether students can reach you directly on WhatsApp or exclusively via Hommiez In-App Chat.
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  {/* Option 1: YES */}
+                  <div
+                    onClick={() => setFormData({ ...formData, contactPreference: 'whatsapp' })}
+                    style={{
+                      padding: '0.85rem',
+                      borderRadius: '10px',
+                      border: formData.contactPreference === 'whatsapp' ? '2px solid #16A34A' : '1px solid var(--border-color)',
+                      backgroundColor: formData.contactPreference === 'whatsapp' ? '#F0FDF4' : '#FFFFFF',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: '700', fontSize: '0.875rem', color: formData.contactPreference === 'whatsapp' ? '#166534' : 'var(--text-main)' }}>
+                      <MessageCircle size={16} color="#16A34A" />
+                      <span>YES – Share my contact</span>
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.3rem', lineHeight: 1.35 }}>
+                      Direct WhatsApp button shown. Students can message your phone number.
+                    </div>
+                  </div>
+
+                  {/* Option 2: NO */}
+                  <div
+                    onClick={() => setFormData({ ...formData, contactPreference: 'in_app' })}
+                    style={{
+                      padding: '0.85rem',
+                      borderRadius: '10px',
+                      border: formData.contactPreference === 'in_app' ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+                      backgroundColor: formData.contactPreference === 'in_app' ? 'var(--primary-light)' : '#FFFFFF',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: '700', fontSize: '0.875rem', color: formData.contactPreference === 'in_app' ? 'var(--primary)' : 'var(--text-main)' }}>
+                      <ShieldCheck size={16} color="var(--primary)" />
+                      <span>NO – Keep contact private</span>
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.3rem', lineHeight: 1.35 }}>
+                      Phone hidden. Students communicate only through Hommiez In-App Chat.
+                    </div>
+                  </div>
+                </div>
+
+                {/* If YES: allow owner to provide or confirm WhatsApp number */}
+                {formData.contactPreference === 'whatsapp' && (
+                  <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '1px solid #E2E8F0' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', display: 'block', marginBottom: '0.35rem' }}>
+                      Confirm WhatsApp Phone Number for this listing <span style={{ color: '#DC2626' }}>*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="e.g. +91 98765 43210"
+                      value={formData.whatsappNumber}
+                      onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
+                      className="form-control"
+                      style={{ backgroundColor: '#FFFFFF' }}
+                    />
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
+                      Click-to-chat WhatsApp link will be automatically generated with this listing's title pre-filled.
+                    </span>
+                  </div>
+                )}
+              </div>
+
               <div className="form-group">
                 <label className="form-label">Description & Highlights</label>
                 <textarea
@@ -780,7 +864,11 @@ export default function BrokerDashboardPage() {
                   disabled={formLoading}
                   className="btn-accent"
                 >
-                  {formLoading ? uploadStatus || 'Publishing...' : 'Publish Listing'}
+                  {formLoading
+                    ? uploadStatus || 'Saving...'
+                    : editingListingId
+                    ? 'Save Changes'
+                    : 'Publish Listing'}
                 </button>
               </div>
             </form>
