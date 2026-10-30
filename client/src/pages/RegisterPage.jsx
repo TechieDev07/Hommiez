@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { GraduationCap, Building2, UserPlus } from 'lucide-react';
+import PasswordInput from '../components/common/PasswordInput';
 
 export default function RegisterPage() {
   const [role, setRole] = useState('student'); // 'student' or 'broker'
