@@ -95,6 +95,24 @@ export default function Navbar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Link
+                to="/chat"
+                className="btn-outline"
+                style={{
+                  padding: '0.4rem 0.65rem',
+                  fontSize: '0.8rem',
+                  minHeight: '36px',
+                  position: 'relative',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                }}
+                title="Messages / Inbox"
+              >
+                <MessageSquare size={16} color="var(--primary)" />
+                <span className="hide-on-mobile-inline">Chat</span>
+              </Link>
+
               {isBroker && (
                 <Link to="/broker/dashboard" className="btn-primary" style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', minHeight: '36px' }}>
                   <Building size={15} />
