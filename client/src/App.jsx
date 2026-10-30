@@ -9,7 +9,19 @@ import FlatmatesPage from './pages/FlatmatesPage';
 import MarketplacePage from './pages/MarketplacePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import BrokerDashboardPage from './pages/BrokerDashboardPage';
+import ChatPage from './pages/ChatPage';
+
+// Protected Route Guard for Authenticated Users
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div style={{ padding: '4rem', textAlign: 'center' }}>Loading...</div>;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
 
 // Protected Route Guard for Owner / Broker Dashboard
 function BrokerRoute({ children }) {
@@ -37,9 +49,20 @@ export default function App() {
               {/* Property Details */}
               <Route path="/listings/:id" element={<ListingDetailPage />} />
 
+              {/* Real-time In-App Chat Inbox */}
+              <Route
+                path="/chat"
+                element={
+                  <ProtectedRoute>
+                    <ChatPage />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Auth Routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
               {/* Owner Dashboard */}
               <Route
