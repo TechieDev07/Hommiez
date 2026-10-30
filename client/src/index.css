@@ -205,7 +205,6 @@ input, select, textarea {
   gap: 1rem;
 }
 
-/* TABLET & MOBILE MEDIA QUERIES (<= 768px) */
 @media (max-width: 768px) {
   .container { padding: 0 1rem; }
   .hero-title { font-size: 1.85rem; line-height: 1.25; }
@@ -221,6 +220,21 @@ input, select, textarea {
     display: none !important;
   }
   .mobile-tabs-bar {
+    display: flex !important;
+  }
+
+  /* Chat responsive rules */
+  .chat-main-grid {
+    grid-template-columns: 1fr !important;
+    height: calc(100vh - 120px) !important;
+  }
+  .chat-sidebar.hide-on-mobile {
+    display: none !important;
+  }
+  .chat-content.hide-on-mobile {
+    display: none !important;
+  }
+  .mobile-back-btn {
     display: flex !important;
   }
 }
@@ -239,5 +253,6 @@ input, select, textarea {
     transform: rotate(360deg);
   }
 }
+
 
 
