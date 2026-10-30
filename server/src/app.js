@@ -1,8 +1,11 @@
 import express from 'express';
+import http from 'http';
+import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
 import { errorHandler } from './middlewares/errorHandler.js';
+import { setupSocketServer } from './socket.js';
 
 // Route imports
 import authRoutes from './routes/authRoutes.js';
@@ -11,17 +14,33 @@ import leadRoutes from './routes/leadRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import marketplaceRoutes from './routes/marketplaceRoutes.js';
 import flatmateRoutes from './routes/flatmateRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
 
 // Load environment variables from .env file
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+
+const server = http.createServer(app);
+
+// Initialize Socket.IO with CORS
+const io = new Server(server, {
+  cors: {
+    origin: clientUrl,
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
+
+// Setup Socket event listeners
+setupSocketServer(io);
 
 // Enable Cross-Origin Resource Sharing for React frontend
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: clientUrl,
     credentials: true,
   })
 );
@@ -46,6 +65,7 @@ app.use('/api/v1/leads', leadRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/marketplace', marketplaceRoutes);
 app.use('/api/v1/flatmates', flatmateRoutes);
+app.use('/api/v1/chat', chatRoutes);
 
 // Centralized Error Handler (must be after all routes)
 app.use(errorHandler);
@@ -58,11 +78,13 @@ const startServer = async () => {
     console.warn('⚠️ No MONGO_URI specified in .env. Skipping DB connection.');
   }
 
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`🏠 Hommiez Server running on http://localhost:${PORT}`);
+    console.log(`💬 Socket.IO real-time chat initialized`);
   });
 };
 
 startServer();
 
 export default app;
+

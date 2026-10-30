@@ -81,6 +81,21 @@ const listingSchema = new mongoose.Schema(
       enum: ['available', 'rented'],
       default: 'available',
     },
+    // Contact Sharing Preference
+    // 'whatsapp' = Direct WhatsApp Contact (phone revealed)
+    // 'in_app' = In-App Chat Only (phone hidden, communication via Hommiez chat)
+    contactPreference: {
+      type: String,
+      enum: ['whatsapp', 'in_app'],
+      default: 'whatsapp',
+      required: true,
+    },
+    // Optional custom or confirmed WhatsApp number specific to this listing
+    whatsappNumber: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     // Automatic 30-day listing expiration
     expiresAt: {
       type: Date,

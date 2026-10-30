@@ -3,6 +3,7 @@ import {
   getListings,
   getListingById,
   createListing,
+  updateListing,
   toggleListingStatus,
   getMyListings,
 } from '../controllers/listingController.js';
@@ -21,6 +22,7 @@ router.get('/:id', getListingById);
 
 // Broker actions (Requires login + broker/owner role)
 router.post('/', protect, authorize('broker'), createListing);
+router.put('/:id', protect, authorize('broker'), updateListing);
 router.patch('/:id/status', protect, authorize('broker'), toggleListingStatus);
 
 export default router;

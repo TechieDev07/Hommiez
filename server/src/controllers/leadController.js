@@ -20,10 +20,10 @@ export const unlockBrokerContact = async (req, res, next) => {
 
     // 2. Fetch broker with phone number
     const broker = await User.findById(listing.broker);
-    if (!broker || !broker.phone) {
+    if (!broker) {
       return res.status(404).json({
         success: false,
-        message: 'Broker contact information is currently unavailable.',
+        message: 'Owner profile is unavailable.',
       });
     }
 
@@ -34,20 +34,37 @@ export const unlockBrokerContact = async (req, res, next) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // 4. Build a pre-filled WhatsApp click-to-chat link
-    const cleanPhone = broker.phone.replace(/[^0-9]/g, '');
+    // If owner selected in-app only, phone is NOT unlocked/revealed
+    if (listing.contactPreference === 'in_app') {
+      return res.status(200).json({
+        success: true,
+        message: 'Owner prefers In-App chat on Hommiez.',
+        contact: {
+          brokerName: broker.name,
+          businessName: broker.businessName || 'Property Owner',
+          contactPreference: 'in_app',
+          phone: null,
+          whatsappUrl: null,
+        },
+      });
+    }
+
+    // Otherwise, Direct WhatsApp Contact mode
+    const contactPhone = listing.whatsappNumber || broker.phone || '';
+    const cleanPhone = contactPhone.replace(/[^0-9]/g, '');
     const prefilledMessage = encodeURIComponent(
-      `Hi ${broker.name}, I am a student from college interested in your listing: "${listing.title}" on Hommiez.`
+      `Hi ${broker.name}, I am a student interested in your property "${listing.title}" on Hommiez.`
     );
-    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${prefilledMessage}`;
+    const whatsappUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${prefilledMessage}` : null;
 
     res.status(200).json({
       success: true,
       message: 'Broker contact unlocked successfully!',
       contact: {
         brokerName: broker.name,
-        businessName: broker.businessName || 'Independent Broker',
-        phone: broker.phone,
+        businessName: broker.businessName || 'Property Owner',
+        contactPreference: 'whatsapp',
+        phone: contactPhone || null,
         whatsappUrl,
       },
     });

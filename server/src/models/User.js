@@ -36,6 +36,10 @@ const userSchema = new mongoose.Schema(
       default: '', // e.g. "TIET", "VIT", "DU", etc.
     },
 
+    avatar: {
+      type: String,
+      default: '',
+    },
     // --- Broker / Property Owner Fields ---
     phone: {
       type: String,
@@ -50,6 +54,21 @@ const userSchema = new mongoose.Schema(
     isApprovedByAdmin: {
       type: Boolean,
       default: true, // Set to true by default for frictionless onboarding
+    },
+
+    // --- Password Reset OTP Fields ---
+    resetPasswordOtp: {
+      type: String,
+      select: false, // OTP hash
+    },
+    resetPasswordOtpExpires: {
+      type: Date,
+      select: false,
+    },
+    resetPasswordAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
     },
   },
   {
