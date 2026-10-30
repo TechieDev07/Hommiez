@@ -13,7 +13,10 @@ import {
   RotateCcw,
   Zap,
   ShieldCheck,
+  Edit3,
+  MessageCircle,
 } from 'lucide-react';
+
 
 export default function BrokerDashboardPage() {
   const { user } = useAuth();
@@ -22,6 +25,8 @@ export default function BrokerDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [updatingStatusId, setUpdatingStatusId] = useState(null);
+
+  const [editingListingId, setEditingListingId] = useState(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -35,6 +40,8 @@ export default function BrokerDashboardPage() {
     distanceFromCampusKm: '',
     description: '',
     gender: 'any',
+    contactPreference: 'whatsapp', // 'whatsapp' or 'in_app'
+    whatsappNumber: '',
   });
 
   // Photo files & previews state
@@ -89,6 +96,50 @@ export default function BrokerDashboardPage() {
     setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleOpenCreateModal = () => {
+    setEditingListingId(null);
+    setFormData({
+      title: '',
+      type: 'pg',
+      rent: '',
+      deposit: '',
+      hasBrokerage: false,
+      brokerageFee: '',
+      locationName: '',
+      distanceFromCampusKm: '',
+      description: '',
+      gender: 'any',
+      contactPreference: 'whatsapp',
+      whatsappNumber: user?.phone || '',
+    });
+    setSelectedFiles([]);
+    setPreviewUrls([]);
+    setFormError('');
+    setShowCreateModal(true);
+  };
+
+  const handleOpenEditModal = (item) => {
+    setEditingListingId(item._id);
+    setFormData({
+      title: item.title || '',
+      type: item.type || 'pg',
+      rent: item.rent || '',
+      deposit: item.deposit || '',
+      hasBrokerage: item.hasBrokerage === true || Number(item.brokerageFee) > 0,
+      brokerageFee: item.brokerageFee || '',
+      locationName: item.locationName || '',
+      distanceFromCampusKm: item.distanceFromCampusKm || '',
+      description: item.description || '',
+      gender: item.preferences?.gender || 'any',
+      contactPreference: item.contactPreference || 'whatsapp',
+      whatsappNumber: item.whatsappNumber || user?.phone || '',
+    });
+    setSelectedFiles([]);
+    setPreviewUrls((item.photos || []).map((p) => p.url));
+    setFormError('');
+    setShowCreateModal(true);
+  };
+
   const handleToggleStatus = async (id, currentStatus) => {
     setUpdatingStatusId(id);
     try {
@@ -141,29 +192,27 @@ export default function BrokerDashboardPage() {
         distanceFromCampusKm: Number(formData.distanceFromCampusKm),
         description: formData.description,
         preferences: { gender: formData.gender },
-        photos: uploadedPhotos,
+        contactPreference: formData.contactPreference,
+        whatsappNumber: formData.contactPreference === 'whatsapp' ? formData.whatsappNumber : '',
       };
 
-      await axiosClient.post('/listings', payload);
+      if (uploadedPhotos.length > 0) {
+        payload.photos = uploadedPhotos;
+      }
+
+      if (editingListingId) {
+        await axiosClient.put(`/listings/${editingListingId}`, payload);
+      } else {
+        await axiosClient.post('/listings', payload);
+      }
 
       setShowCreateModal(false);
+      setEditingListingId(null);
       setSelectedFiles([]);
       setPreviewUrls([]);
-      setFormData({
-        title: '',
-        type: 'pg',
-        rent: '',
-        deposit: '',
-        hasBrokerage: false,
-        brokerageFee: '',
-        locationName: '',
-        distanceFromCampusKm: '',
-        description: '',
-        gender: 'any',
-      });
       fetchDashboardData();
     } catch (err) {
-      setFormError(err.response?.data?.message || 'Failed to publish listing.');
+      setFormError(err.response?.data?.message || 'Failed to save listing.');
     } finally {
       setFormLoading(false);
       setUploadStatus('');
@@ -200,7 +249,7 @@ export default function BrokerDashboardPage() {
         </div>
 
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={handleOpenCreateModal}
           className="btn-accent"
           style={{ padding: '0.65rem 1.15rem' }}
         >
@@ -304,7 +353,28 @@ export default function BrokerDashboardPage() {
                   </div>
                 </div>
 
-                <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => handleOpenEditModal(item)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0.5rem 0.85rem',
+                      borderRadius: '10px',
+                      fontSize: '0.825rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      backgroundColor: '#FFFFFF',
+                      color: 'var(--primary)',
+                      border: '1.5px solid var(--primary-border)',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                    }}
+                  >
+                    <Edit3 size={14} />
+                    <span>Edit</span>
+                  </button>
+
                   <button
                     onClick={() => handleToggleStatus(item._id, item.status)}
                     disabled={updatingStatusId === item._id}
