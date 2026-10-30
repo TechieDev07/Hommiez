@@ -203,68 +203,127 @@ export default function ListingDetailPage() {
             </div>
           </div>
 
-          {unlockedContact ? (
-            <div style={{
-              backgroundColor: '#F0FDF4',
-              border: '1px solid #BBF7D0',
-              borderRadius: 'var(--radius-md)',
-              padding: '1.25rem',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#166534', fontWeight: '700', marginBottom: '0.4rem', fontSize: '0.9rem' }}>
-                <CheckCircle2 size={16} />
-                <span>Contact Unlocked!</span>
-              </div>
-              <div style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                {unlockedContact.brokerName}
-              </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.85rem' }}>
-                {unlockedContact.businessName}
+          {/* Mode A: Direct WhatsApp Contact */}
+          {listing.contactPreference !== 'in_app' && (
+            <div>
+              <div
+                style={{
+                  backgroundColor: '#F0FDF4',
+                  border: '1px solid #BBF7D0',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '1rem',
+                  marginBottom: '1rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#166534', fontWeight: '700', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+                  <CheckCircle2 size={15} />
+                  <span>Direct WhatsApp Contact Enabled</span>
+                </div>
+                <div style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                  {listing.broker?.name || 'Property Owner'}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  {listing.broker?.businessName || 'Direct Owner / Independent'}
+                </div>
+                {listing.contactPhone && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem', fontWeight: '700', color: 'var(--primary)', marginTop: '0.45rem' }}>
+                    <Phone size={14} />
+                    <span>{listing.contactPhone}</span>
+                  </div>
+                )}
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '1rem', fontWeight: '700', color: 'var(--primary)', marginBottom: '1rem' }}>
-                <Phone size={16} />
-                <span>{unlockedContact.phone}</span>
-              </div>
-
-              {unlockedContact.whatsappUrl && (
+              {listing.whatsappUrl ? (
                 <a
-                  href={unlockedContact.whatsappUrl}
+                  href={listing.whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-primary"
-                  style={{ width: '100%', backgroundColor: '#25D366', fontSize: '0.9rem' }}
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#25D366',
+                    fontSize: '0.95rem',
+                    padding: '0.8rem',
+                    marginBottom: '0.65rem',
+                  }}
                 >
                   <MessageCircle size={18} />
                   Chat on WhatsApp
                 </a>
+              ) : (
+                <button
+                  onClick={handleUnlockContact}
+                  disabled={unlockLoading}
+                  className="btn-primary"
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#25D366',
+                    fontSize: '0.95rem',
+                    padding: '0.8rem',
+                    marginBottom: '0.65rem',
+                  }}
+                >
+                  <MessageCircle size={18} />
+                  {unlockLoading ? 'Opening WhatsApp...' : 'Chat on WhatsApp'}
+                </button>
+              )}
+
+              {/* Also allow in-app chat as an optional alternative */}
+              {user && listing.broker?._id && (
+                <Link
+                  to={`/chat?user=${listing.broker._id}&listing=${listing._id}`}
+                  className="btn-outline"
+                  style={{ width: '100%', padding: '0.65rem', fontSize: '0.85rem' }}
+                >
+                  <MessageSquare size={16} />
+                  Or Chat In-App
+                </Link>
               )}
             </div>
-          ) : (
-            <div>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.15rem', lineHeight: 1.5 }}>
-                {user
-                  ? 'Click below to unlock the owner/broker phone number and start a direct WhatsApp chat.'
-                  : 'Log in to unlock owner phone numbers, schedule room visits, and chat directly.'}
-              </p>
+          )}
 
-              <button
-                onClick={handleUnlockContact}
-                disabled={unlockLoading}
-                className="btn-accent"
-                style={{ width: '100%', padding: '0.8rem', fontSize: '0.95rem' }}
+          {/* Mode B: In-App Chat Only (Phone number kept strictly private) */}
+          {listing.contactPreference === 'in_app' && (
+            <div>
+              <div
+                style={{
+                  backgroundColor: 'var(--primary-light)',
+                  border: '1px solid var(--primary-border)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '1rem',
+                  marginBottom: '1.15rem',
+                }}
               >
-                {unlockLoading ? (
-                  'Unlocking...'
-                ) : user ? (
-                  <>
-                    <Zap size={18} /> Unlock Phone & WhatsApp
-                  </>
-                ) : (
-                  <>
-                    <Lock size={18} /> Log in to Unlock Contact
-                  </>
-                )}
-              </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary)', fontWeight: '700', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+                  <ShieldCheck size={16} />
+                  <span>Private In-App Contact Only</span>
+                </div>
+                <div style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                  {listing.broker?.name || 'Property Owner'}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', lineHeight: 1.4 }}>
+                  The owner has chosen to keep their phone number private. Connect seamlessly and securely through Hommiez chat!
+                </div>
+              </div>
+
+              {user ? (
+                <Link
+                  to={`/chat?user=${listing.broker?._id || ''}&listing=${listing._id}`}
+                  className="btn-primary"
+                  style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem' }}
+                >
+                  <MessageSquare size={18} />
+                  Chat with Owner
+                </Link>
+              ) : (
+                <button
+                  onClick={() => navigate('/login', { state: { from: `/listings/${id}` } })}
+                  className="btn-primary"
+                  style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem' }}
+                >
+                  <Lock size={18} /> Log in to Chat with Owner
+                </button>
+              )}
             </div>
           )}
         </div>
