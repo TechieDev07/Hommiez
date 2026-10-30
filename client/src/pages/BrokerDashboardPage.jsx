@@ -519,7 +519,9 @@ export default function BrokerDashboardPage() {
           zIndex: 1000,
         }}>
           <div className="card modal-card" style={{ width: '100%', maxWidth: '620px', maxHeight: '90vh', overflowY: 'auto', padding: '1.75rem' }}>
-            <h2 style={{ fontSize: '1.3rem', fontWeight: '800', marginBottom: '1.2rem' }}>Post a New Property</h2>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: '800', marginBottom: '1.2rem' }}>
+              {editingListingId ? 'Edit Property Listing' : 'Post a New Property'}
+            </h2>
 
             {formError && (
               <div style={{ backgroundColor: '#FEE2E2', color: '#991B1B', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', fontSize: '0.85rem' }}>
