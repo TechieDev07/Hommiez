@@ -10,7 +10,10 @@ import {
   ArrowLeft,
   CheckCircle2,
   Lock,
+  MessageSquare,
+  ShieldCheck,
 } from 'lucide-react';
+
 
 export default function ListingDetailPage() {
   const { id } = useParams();
