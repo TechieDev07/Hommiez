@@ -1,34 +1,64 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ShoppingBag, PlusCircle, MessageCircle, MapPin, X, Loader2, Trash2, Lock } from 'lucide-react';
-import axiosClient from '../api/axiosClient';
-import ConfirmDialog from '../components/common/ConfirmDialog';
+import { ShoppingBag, PlusCircle, MessageCircle, MapPin, X, UploadCloud } from 'lucide-react';
 
-const REGIONS = [
-  'Akurdi (Near Rly Stn)',
-  'Akurdi (Near College Gate)',
-  'Pradhikaran',
-  'Nigdi',
-  'Chinchwad',
-  'Ravet',
-  'Pimpri',
-  'Other',
+const INITIAL_ITEMS = [
+  {
+    _id: '1',
+    title: 'Room Air Cooler (Used 1 Summer)',
+    price: 2200,
+    isNegotiable: true,
+    category: 'appliances',
+    location: 'Akurdi (Near Rly Stn)',
+    sellerName: 'Vikram S.',
+    photos: ['https://images.unsplash.com/photo-1585338107529-13afc5f02586?auto=format&fit=crop&w=500&q=80'],
+    description: 'Working cooler, high airflow. Selling because shifting to new flat.',
+    whatsapp: '919876543221',
+  },
+  {
+    _id: '2',
+    title: 'Wooden Study Table with Chair',
+    price: 1500,
+    isNegotiable: false,
+    category: 'furniture',
+    location: 'Pradhikaran, Sector 24',
+    sellerName: 'Ananya R.',
+    photos: ['https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=500&q=80'],
+    description: 'Solid wooden table with storage drawer. Price is fixed.',
+    whatsapp: '919876543222',
+  },
+  {
+    _id: '3',
+    title: 'Induction Cooker + Electric Kettle',
+    price: 1100,
+    isNegotiable: true,
+    category: 'appliances',
+    location: 'Akurdi (Near College Gate)',
+    sellerName: 'Kunal P.',
+    photos: ['https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=500&q=80'],
+    description: 'Both items working. Perfect for late-night cooking in PG.',
+    whatsapp: '919876543223',
+  },
+  {
+    _id: '4',
+    title: 'Engineering Mechanics & Math Notes (Sem 1-2)',
+    price: 450,
+    isNegotiable: true,
+    category: 'books',
+    location: 'Akurdi Rly Stn Road',
+    sellerName: 'Sneha G.',
+    photos: ['https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=500&q=80'],
+    description: 'Clean notes with solved previous year question sets.',
+    whatsapp: '919876543224',
+  },
 ];
 
 export default function MarketplacePage() {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [items, setItems] = useState(INITIAL_ITEMS);
   const [category, setCategory] = useState('');
   const [negotiableFilter, setNegotiableFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [deleteTargetId, setDeleteTargetId] = useState(null);
-  const [deleting, setDeleting] = useState(false);
 
   // Form State
   const [newItem, setNewItem] = useState({
@@ -36,124 +66,45 @@ export default function MarketplacePage() {
     category: 'furniture',
     price: '',
     isNegotiable: true,
-    age: '',
+    itemAge: '',
     description: '',
     phone: '',
-    location: '',
-    customLocation: '',
   });
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [previewUrls, setPreviewUrls] = useState([]);
+  const [selectedPhotos, setSelectedPhotos] = useState([]);
 
-  // ── Load items from MongoDB on mount / filter / auth change ───────────────
-  useEffect(() => {
-    fetchItems();
-  }, [category, negotiableFilter, user]);
-
-  const fetchItems = async () => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (category) params.category = category;
-      if (negotiableFilter === 'yes') params.isNegotiable = true;
-      if (negotiableFilter === 'no') params.isNegotiable = false;
-
-      const res = await axiosClient.get('/marketplace', { params });
-      setItems(res.data.data || []);
-    } catch (err) {
-      console.error('Failed to load marketplace items:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Filter items cleanly
+  const filtered = items.filter((item) => {
+    if (category && item.category !== category) return false;
+    if (negotiableFilter === 'yes' && !item.isNegotiable) return false;
+    if (negotiableFilter === 'no' && item.isNegotiable) return false;
+    return true;
+  });
 
   const handlePhotoSelect = (e) => {
     const files = Array.from(e.target.files).slice(0, 3);
-    setSelectedFiles(files);
-    setPreviewUrls(files.map((f) => URL.createObjectURL(f)));
+    const urls = files.map((f) => URL.createObjectURL(f));
+    setSelectedPhotos(urls);
   };
 
-  const handleCreate = async (e) => {
+  const handleCreate = (e) => {
     e.preventDefault();
-    if (!user) {
-      setError('Please log in to post an item.');
-      return;
-    }
-    setSubmitting(true);
-    setError('');
+    const created = {
+      _id: 'item_' + Date.now(),
+      title: newItem.title,
+      category: newItem.category,
+      price: Number(newItem.price),
+      isNegotiable: newItem.isNegotiable,
+      itemAge: newItem.age,
+      sellerName: user?.name || 'Student',
+      photos: selectedPhotos.length > 0 ? selectedPhotos : ['https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=500&q=80'],
+      description: newItem.description,
+      whatsapp: newItem.phone.replace(/[^0-9]/g, '') || '919876543210',
+    };
 
-    try {
-      // Step 1: Upload photos to Cloudinary (if any selected)
-      let uploadedPhotos = [];
-      if (selectedFiles.length > 0) {
-        const formData = new FormData();
-        selectedFiles.forEach((file) => formData.append('photos', file));
-        const uploadRes = await axiosClient.post('/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        uploadedPhotos = uploadRes.data.photos; // [{ url, publicId }]
-      }
-
-      // Step 2: Save item to MongoDB
-      const finalLocation =
-        newItem.location === 'Other' && newItem.customLocation.trim()
-          ? newItem.customLocation.trim()
-          : newItem.location || 'Akurdi, Pune';
-
-      const payload = {
-        title: newItem.title,
-        category: newItem.category,
-        price: Number(newItem.price),
-        isNegotiable: newItem.isNegotiable,
-        itemAge: newItem.age,
-        description: newItem.description,
-        location: finalLocation,
-        whatsapp: newItem.phone.replace(/[^0-9]/g, ''),
-        photos: uploadedPhotos,
-      };
-
-      const res = await axiosClient.post('/marketplace', payload);
-      // Prepend new item to the list
-      setItems((prev) => [res.data.data, ...prev]);
-
-      // Reset form
-      setShowModal(false);
-      setSelectedFiles([]);
-      setPreviewUrls([]);
-      setNewItem({
-        title: '',
-        category: 'furniture',
-        price: '',
-        isNegotiable: true,
-        age: '',
-        description: '',
-        phone: '',
-        location: '',
-        customLocation: '',
-      });
-    } catch (err) {
-      console.error('Failed to post item:', err);
-      setError(
-        err?.response?.data?.message || 'Failed to post item. Please try again.'
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteTargetId) return;
-    setDeleting(true);
-    try {
-      await axiosClient.delete(`/marketplace/${deleteTargetId}`);
-      setItems((prev) => prev.filter((i) => i._id !== deleteTargetId));
-      setDeleteTargetId(null);
-    } catch (err) {
-      console.error('Failed to delete item:', err);
-      alert(err?.response?.data?.message || 'Could not delete item.');
-    } finally {
-      setDeleting(false);
-    }
+    setItems([created, ...items]);
+    setShowModal(false);
+    setSelectedPhotos([]);
+    setNewItem({ title: '', category: 'furniture', price: '', isNegotiable: true, age: '', description: '', phone: '' });
   };
 
   return (
@@ -161,8 +112,8 @@ export default function MarketplacePage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: '800' }}>Campus Buy &amp; Sell</h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Buy &amp; sell pre-loved coolers, tables, cycles, and books near Akurdi campus.</p>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: '800' }}>Campus Buy & Sell</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Buy & sell pre-loved coolers, tables, cycles, and books near your area.</p>
         </div>
         <button onClick={() => setShowModal(true)} className="btn-accent" style={{ padding: '0.65rem 1.15rem' }}>
           <PlusCircle size={18} /> Sell an Item
@@ -178,7 +129,7 @@ export default function MarketplacePage() {
             <option value="furniture">Furniture (Table, Mattress)</option>
             <option value="appliances">Appliances (Cooler, Kettle)</option>
             <option value="vehicles">Bicycle / Vehicle</option>
-            <option value="books">Books &amp; Notes</option>
+            <option value="books">Books & Notes</option>
             <option value="other">Other / Miscellaneous</option>
           </select>
         </div>
@@ -194,104 +145,44 @@ export default function MarketplacePage() {
       </div>
 
       {/* Items Grid */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-          <Loader2 size={32} style={{ animation: 'spin 1s linear infinite' }} />
-          <p style={{ marginTop: '0.75rem' }}>Loading items…</p>
-        </div>
-      ) : items.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-          <ShoppingBag size={48} style={{ marginBottom: '1rem', opacity: 0.4 }} />
-          <p>No items found. Be the first to sell something!</p>
-        </div>
-      ) : (
-        <div className="listings-grid">
-          {items.map((item) => (
-            <div key={item._id} className="card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ height: '170px', position: 'relative', backgroundColor: '#E2E8F0' }}>
-                {item.photos && item.photos.length > 0 ? (
-                  <img src={item.photos[0].url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ShoppingBag size={40} style={{ opacity: 0.3 }} />
-                  </div>
-                )}
-                <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
-                  <span className={`badge ${item.isNegotiable ? 'badge-available' : 'badge-distance'}`}>
-                    {item.isNegotiable ? 'Negotiable' : 'Fixed Price'}
-                  </span>
-                </div>
-              </div>
-
-              <div style={{ padding: '1.15rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '0.35rem' }}>{item.title}</h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.65rem' }}>
-                  <MapPin size={14} color="var(--primary)" />
-                  <span>{item.location}</span>
-                  <span>•</span>
-                  <span>By {item.sellerName}</span>
-                </div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.4, marginBottom: '0.85rem', flexGrow: 1 }}>
-                  {item.description}
-                </p>
-
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.65rem', borderTop: '1px solid var(--border-color)' }}>
-                  <div style={{ fontSize: '1.25rem', fontWeight: '800' }}>₹{Number(item.price).toLocaleString()}</div>
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    {user ? (
-                      <a
-                        href={`https://wa.me/${item.whatsapp}?text=${encodeURIComponent(`Hi ${item.sellerName}, I saw your "${item.title}" on Hommiez!`)}`}
-                        target="_blank" rel="noopener noreferrer"
-                        className="btn-primary" style={{ backgroundColor: '#25D366', padding: '0.45rem 0.85rem', fontSize: '0.85rem', minHeight: '36px' }}
-                      >
-                        <MessageCircle size={15} /> WhatsApp
-                      </a>
-                    ) : (
-                      <button
-                        onClick={() => navigate('/login', { state: { from: location.pathname } })}
-                        className="btn-outline"
-                        style={{
-                          padding: '0.45rem 0.85rem',
-                          fontSize: '0.85rem',
-                          minHeight: '36px',
-                          color: 'var(--primary)',
-                          borderColor: 'rgba(37, 99, 235, 0.35)',
-                          backgroundColor: 'rgba(37, 99, 235, 0.04)',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          fontWeight: '600',
-                        }}
-                        title="Please log in first to chat on WhatsApp"
-                      >
-                        <Lock size={14} /> Log in to Chat
-                      </button>
-                    )}
-                    {user && item.seller && String(user?.id || user?._id) === String(item?.seller?._id || item?.seller) && (
-                      <button
-                        onClick={() => setDeleteTargetId(item._id)}
-                        title="Delete your listing"
-                        style={{
-                          background: 'none',
-                          border: '1px solid #FCA5A5',
-                          borderRadius: 'var(--radius-md)',
-                          color: '#DC2626',
-                          padding: '0.45rem 0.6rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    )}
-                  </div>
-                </div>
+      <div className="listings-grid">
+        {filtered.map((item) => (
+          <div key={item._id} className="card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ height: '170px', position: 'relative', backgroundColor: '#E2E8F0' }}>
+              <img src={item.photos[0]} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
+                <span className={`badge ${item.isNegotiable ? 'badge-available' : 'badge-distance'}`}>
+                  {item.isNegotiable ? 'Negotiable' : 'Fixed Price'}
+                </span>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+
+            <div style={{ padding: '1.15rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '0.35rem' }}>{item.title}</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.65rem' }}>
+                <MapPin size={14} color="var(--primary)" />
+                <span>{item.location}</span>
+                <span>•</span>
+                <span>By {item.sellerName}</span>
+              </div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.4, marginBottom: '0.85rem', flexGrow: 1 }}>
+                {item.description}
+              </p>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.65rem', borderTop: '1px solid var(--border-color)' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: '800' }}>₹{item.price.toLocaleString()}</div>
+                <a
+                  href={`https://wa.me/${item.whatsapp}?text=${encodeURIComponent(`Hi ${item.sellerName}, I saw your "${item.title}" on Hommiez!`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="btn-primary" style={{ backgroundColor: '#25D366', padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}
+                >
+                  <MessageCircle size={15} /> WhatsApp
+                </a>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Modal */}
       {showModal && (
@@ -301,12 +192,6 @@ export default function MarketplacePage() {
               <h2 style={{ fontSize: '1.25rem', fontWeight: '800' }}>Sell an Item</h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none' }}><X size={20} /></button>
             </div>
-
-            {error && (
-              <div style={{ backgroundColor: '#FEE2E2', color: '#DC2626', borderRadius: '8px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-                {error}
-              </div>
-            )}
 
             <form onSubmit={handleCreate}>
               <div className="form-group">
@@ -321,7 +206,7 @@ export default function MarketplacePage() {
                     <option value="furniture">Furniture</option>
                     <option value="appliances">Appliances</option>
                     <option value="vehicles">Bicycle</option>
-                    <option value="books">Books &amp; Notes</option>
+                    <option value="books">Books & Notes</option>
                     <option value="other">Other</option>
                   </select>
                 </div>
@@ -345,37 +230,13 @@ export default function MarketplacePage() {
                 </div>
               </div>
 
+              {/* 2-3 Photos Input */}
               <div className="form-group">
-                <label className="form-label">Location / Area</label>
-                <select
-                  value={newItem.location}
-                  onChange={(e) => setNewItem({ ...newItem, location: e.target.value, customLocation: '' })}
-                  className="form-control"
-                  required={newItem.location !== 'Other'}
-                >
-                  <option value="">Select Area</option>
-                  {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-                </select>
-                {newItem.location === 'Other' && (
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Wakad, Baner, FC Road…"
-                    value={newItem.customLocation}
-                    onChange={(e) => setNewItem({ ...newItem, customLocation: e.target.value })}
-                    className="form-control"
-                    style={{ marginTop: '0.5rem' }}
-                  />
-                )}
-              </div>
-
-              {/* Photos */}
-              <div className="form-group">
-                <label className="form-label">Item Photos (up to 3)</label>
+                <label className="form-label">Item Photos (1 to 3 photos)</label>
                 <input type="file" multiple accept="image/*" onChange={handlePhotoSelect} className="form-control" />
-                {previewUrls.length > 0 && (
+                {selectedPhotos.length > 0 && (
                   <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    {previewUrls.map((url, i) => (
+                    {selectedPhotos.map((url, i) => (
                       <img key={i} src={url} alt="preview" style={{ width: '60px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
                     ))}
                   </div>
@@ -384,7 +245,7 @@ export default function MarketplacePage() {
 
               <div className="form-group">
                 <label className="form-label">WhatsApp Number</label>
-                <input type="tel" required placeholder="9876543210" value={newItem.phone} onChange={(e) => setNewItem({ ...newItem, phone: e.target.value })} className="form-control" />
+                <input type="tel" required placeholder="0000000xxx" value={newItem.phone} onChange={(e) => setNewItem({ ...newItem, phone: e.target.value })} className="form-control" />
               </div>
 
               <div className="form-group">
@@ -392,28 +253,11 @@ export default function MarketplacePage() {
                 <textarea rows="2" placeholder="About the product." value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} className="form-control" />
               </div>
 
-              <button type="submit" className="btn-accent" style={{ width: '100%', marginTop: '0.5rem' }} disabled={submitting}>
-                {submitting ? (
-                  <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Posting…</>
-                ) : 'Post Item'}
-              </button>
+              <button type="submit" className="btn-accent" style={{ width: '100%', marginTop: '0.5rem' }}>Post Item</button>
             </form>
           </div>
         </div>
       )}
-
-      {/* Custom Confirmation Modal for Deletion */}
-      <ConfirmDialog
-        isOpen={Boolean(deleteTargetId)}
-        title="Delete Listing?"
-        message="Are you sure you want to delete this item? It will be permanently removed from the marketplace."
-        confirmText="Delete Listing"
-        cancelText="Cancel"
-        destructive={true}
-        loading={deleting}
-        onCancel={() => !deleting && setDeleteTargetId(null)}
-        onConfirm={confirmDelete}
-      />
     </div>
   );
 }
